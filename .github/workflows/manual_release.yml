@@ -15,20 +15,24 @@ on:
         description: 'Release title (optional)'
         required: false
         type: string
-      email:
-        description: 'Send release notes to this email (optional)'
-        required: false
-        type: string
 
 jobs:
   generate-release:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up GitHub CLI
-        uses: cli/cli-action@v2
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install -y gh
+
+      - name: Authenticate GitHub CLI
+        run: gh auth setup-git
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate release notes
         id: notes
@@ -42,22 +46,10 @@ jobs:
           echo "$NOTES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Create release
+      - name: Create GitHub release
         run: |
           gh release create "${{ inputs.to_tag }}" \
             --title "${{ inputs.release_title || format('Release {0}', inputs.to_tag) }}" \
             --notes-file release_notes.txt
-
-      - name: Send email (optional)
-        if: ${{ inputs.email != '' }}
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "GitHub Release Notes: ${{ inputs.to_tag }}"
-          body: ${{ env.RELEASE_NOTES }}
-          to: ${{ inputs.email }}
-          from: ${{ secrets.EMAIL_USERNAME }}
-
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
