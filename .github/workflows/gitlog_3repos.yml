@@ -87,7 +87,6 @@ jobs:
               echo "❌ Failed to resolve tag '$TO' in $REPO. Skipping new tag."
             else
               cd "$REPO_NAME"
-            
               # Ensure remote uses token
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
             
@@ -98,7 +97,7 @@ jobs:
                 git push origin "$NEW_TAG"
                 echo "✅ Pushed $NEW_TAG to $REPO"
               fi
-      
+            fi
       
             cd ..
             rm -rf "$REPO_DIR"
