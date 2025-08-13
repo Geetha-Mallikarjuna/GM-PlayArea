@@ -27,19 +27,15 @@ on:
 jobs:
   changelog-only:
     runs-on: ubuntu-latest
+
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 👈 Set once for all steps
+      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}  # 👈 Use PAT here
 
     steps:
       - name: Install GitHub CLI and Pandoc
         run: |
           sudo apt update
           sudo apt install -y gh pandoc
-
-      - name: Set up GH_TOKEN
-        run: echo "GH_TOKEN is set."
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate changelogs (Markdown)
         run: |
@@ -85,25 +81,6 @@ jobs:
             echo "" >> "$FILE_MD"
             echo "$NOTES" >> "$FILE_MD"
           done
-          
-          # Combine all into one summary (Markdown)
-          cat changelogs/*.txt > changelogs/changelogs-summary.txt
 
-          echo "✅ Markdown changelogs generated:"
-          cat changelogs/changelogs-summary.txt
-      
-          
-      - name: Convert changelogs to HTML
-        run: |
-          for FILE in changelogs/*.txt; do
-            HTML_FILE="${FILE%.txt}.html"
-            pandoc "$FILE" -f markdown -t html -o "$HTML_FILE"
-          done
-
-          echo "✅ HTML versions created."
-
-      - name: Upload all changelogs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: changelogs
-          path: changelogs
+          # Combine all into one summary
+          cat changelogs/*.txt > changelogs/changelogs-summa*
