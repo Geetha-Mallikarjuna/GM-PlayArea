@@ -21,11 +21,6 @@ jobs:
           sudo apt update
           sudo apt install -y gh jq
 
-      - name: Authenticate with GitHub CLI
-        run: gh auth login --with-token <<< "${{ secrets.PERSONAL_TOKEN }}"
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
-
       - name: Decode base64 release matrix
         run: |
           echo "${{ inputs.release_matrix_b64 }}" | base64 --decode > matrix.json
