@@ -83,4 +83,22 @@ jobs:
           done
 
           # Combine all into one summary
-          cat changelogs/*.txt > changelogs/changelogs-summa*
+          cat changelogs/*.txt > changelogs/changelogs-summary.txt
+
+          echo "✅ Markdown changelogs generated:"
+          cat changelogs/changelogs-summary.txt
+
+      - name: Convert changelogs to HTML
+        run: |
+          for FILE in changelogs/*.txt; do
+            HTML_FILE="${FILE%.txt}.html"
+            pandoc "$FILE" -f markdown -t html -o "$HTML_FILE"
+          done
+
+          echo "✅ HTML versions created."
+
+      - name: Upload all changelogs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelogs
+          path: changelogs
