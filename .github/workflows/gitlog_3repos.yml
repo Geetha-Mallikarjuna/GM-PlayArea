@@ -1,27 +1,27 @@
-name: Gitlog
+name: Generate Changelog Summary and Push Unified Tag
 
 on:
   workflow_dispatch:
     inputs:
-      from_tag_repo_1:
-        description: 'From tag for repo 1'
+      from_tag_GM_PlayArea:
+        description: 'From tag for GM-PlayArea'
         required: true
-      to_tag_repo_1:
-        description: 'To tag for repo 1'
-        required: true
-
-      from_tag_repo_2:
-        description: 'From tag for repo 2'
-        required: true
-      to_tag_repo_2:
-        description: 'To tag for repo 2'
+      to_tag_GM_PlayArea:
+        description: 'To tag for GM-PlayArea'
         required: true
 
-      from_tag_repo_3:
-        description: 'From tag for repo 3'
+      from_tag_GM_PlayArea_2:
+        description: 'From tag for GM-PlayArea-2'
         required: true
-      to_tag_repo_3:
-        description: 'To tag for repo 3'
+      to_tag_GM_PlayArea_2:
+        description: 'To tag for GM-PlayArea-2'
+        required: true
+
+      from_tag_GM_PlayArea_3:
+        description: 'From tag for GM-PlayArea-3'
+        required: true
+      to_tag_GM_PlayArea_3:
+        description: 'To tag for GM-PlayArea-3'
         required: true
 
       new_tag:
@@ -41,28 +41,26 @@ jobs:
           sudo apt update
           sudo apt install -y git pandoc
 
-      - name: Generate changelogs and push new tag
+      - name: Generate changelogs and tag commits
         run: |
           mkdir changelogs
 
-          # Define fixed repo list
           REPOS=(
             "Geetha-Mallikarjuna/GM-PlayArea"
             "Geetha-Mallikarjuna/GM-PlayArea-2"
             "Geetha-Mallikarjuna/GM-PlayArea-3"
           )
 
-          # Match inputs by index
           FROM_TAGS=(
-            "${{ inputs.from_tag_repo_1 }}"
-            "${{ inputs.from_tag_repo_2 }}"
-            "${{ inputs.from_tag_repo_3 }}"
+            "${{ inputs.from_tag_GM_PlayArea }}"
+            "${{ inputs.from_tag_GM_PlayArea_2 }}"
+            "${{ inputs.from_tag_GM_PlayArea_3 }}"
           )
 
           TO_TAGS=(
-            "${{ inputs.to_tag_repo_1 }}"
-            "${{ inputs.to_tag_repo_2 }}"
-            "${{ inputs.to_tag_repo_3 }}"
+            "${{ inputs.to_tag_GM_PlayArea }}"
+            "${{ inputs.to_tag_GM_PlayArea_2 }}"
+            "${{ inputs.to_tag_GM_PlayArea_3 }}"
           )
 
           NEW_TAG="${{ inputs.new_tag }}"
@@ -71,21 +69,20 @@ jobs:
             REPO="${REPOS[$i]}"
             FROM="${FROM_TAGS[$i]}"
             TO="${TO_TAGS[$i]}"
-            REPO_NAME=$(basename "$REPO")
+            REPO_DIR=$(basename "$REPO")
 
-            echo "📦 Processing $REPO from $FROM to $TO"
+            echo "📦 Processing $REPO: $FROM → $TO"
 
             git clone --quiet "https://github.com/$REPO.git"
-            cd "$REPO_NAME"
+            cd "$REPO_DIR"
             git fetch --tags
 
-            # Generate changelog
+            # ✅ Changelog generation
             LOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
-
             if [[ -z "$LOG" ]]; then
-              echo "⚠️ No commits between $FROM and $TO"
+              echo "⚠️ No commits found for $REPO"
               cd ..
-              rm -rf "$REPO_NAME"
+              rm -rf "$REPO_DIR"
               continue
             fi
 
@@ -94,35 +91,29 @@ jobs:
             echo "" >> "$FILE"
             echo "$LOG" >> "$FILE"
 
-            # Tag same commit as TO tag
+            # ✅ Tagging logic
             COMMIT=$(git rev-list -n 1 "$TO")
-            echo "🔗 Tagging $COMMIT as $NEW_TAG"
+            echo "🔗 Tagging commit $COMMIT as $NEW_TAG"
 
-            # Only tag if it doesn't already exist
-            if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-              echo "⚠️ Tag $NEW_TAG already exists in $REPO — skipping push"
-            else
-              git tag "$NEW_TAG" "$COMMIT"
-              git push origin "$NEW_TAG"
-              echo "✅ Pushed $NEW_TAG to $REPO"
-            fi
+            git tag "$NEW_TAG" "$COMMIT"
+            git push origin "$NEW_TAG"
 
             cd ..
-            rm -rf "$REPO_NAME"
+            rm -rf "$REPO_DIR"
           done
 
-          # Combine all changelogs into one summary
+          # ✅ Combine all changelogs
           cat changelogs/*.txt > changelogs/changelogs-summary.txt
-          echo "✅ Combined Markdown Changelog:"
+          echo "✅ Combined Changelog:"
           cat changelogs/changelogs-summary.txt
 
-      - name: Convert changelogs to HTML
+      - name: Convert to HTML
         run: |
           for FILE in changelogs/*.txt; do
             pandoc "$FILE" -f markdown -t html -o "${FILE%.txt}.html"
           done
 
-      - name: Upload changelog artifact
+      - name: Upload changelogs
         uses: actions/upload-artifact@v4
         with:
           name: changelogs
