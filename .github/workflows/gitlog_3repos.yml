@@ -1,0 +1,108 @@
+name: Generate Changelog Summary for 3 Repos (Messages Only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_tag_1:
+        description: 'From tag for Repo 1'
+        required: true
+      to_tag_1:
+        description: 'To tag for Repo 1'
+        required: true
+
+      from_tag_2:
+        description: 'From tag for Repo 2'
+        required: true
+      to_tag_2:
+        description: 'To tag for Repo 2'
+        required: true
+
+      from_tag_3:
+        description: 'From tag for Repo 3'
+        required: true
+      to_tag_3:
+        description: 'To tag for Repo 3'
+        required: true
+
+jobs:
+  changelog-only:
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}  # Use your PAT here
+
+    steps:
+      - name: Install git and pandoc
+        run: |
+          sudo apt update
+          sudo apt install -y git pandoc
+
+      - name: Generate changelogs (commit messages only)
+        run: |
+          mkdir changelogs
+
+          REPOS=(
+            "Geetha-Mallikarjuna/GM-PlayArea"
+            "Geetha-Mallikarjuna/GM-PlayArea-2"
+            "Geetha-Mallikarjuna/GM-PlayArea-3"
+          )
+
+          FROM_TAGS=(
+            "${{ inputs.from_tag_1 }}"
+            "${{ inputs.from_tag_2 }}"
+            "${{ inputs.from_tag_3 }}"
+          )
+
+          TO_TAGS=(
+            "${{ inputs.to_tag_1 }}"
+            "${{ inputs.to_tag_2 }}"
+            "${{ inputs.to_tag_3 }}"
+          )
+
+          for i in 0 1 2; do
+            REPO="${REPOS[$i]}"
+            FROM="${FROM_TAGS[$i]}"
+            TO="${TO_TAGS[$i]}"
+            REPO_DIR=$(basename "$REPO")
+
+            echo "📦 Processing $REPO from $FROM to $TO"
+
+            git clone --quiet "https://github.com/$REPO.git"
+            cd "$REPO_DIR"
+            git fetch --tags
+
+            LOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
+
+            cd ..
+            rm -rf "$REPO_DIR"
+
+            if [[ -z "$LOG" ]]; then
+              echo "⚠️ No commits found between $FROM and $TO for $REPO"
+              continue
+            fi
+
+            FILE_MD="changelogs/changelog-${REPO//\//_}.txt"
+            echo "🔖 $REPO: $FROM → $TO" > "$FILE_MD"
+            echo "" >> "$FILE_MD"
+            echo "$LOG" >> "$FILE_MD"
+          done
+
+          # Combine all changelogs into one summary file
+          cat changelogs/*.txt > changelogs/changelogs-summary.txt
+
+          echo "✅ Markdown changelogs generated:"
+          cat changelogs/changelogs-summary.txt
+
+      - name: Convert Markdown changelogs to HTML
+        run: |
+          for FILE in changelogs/*.txt; do
+            HTML_FILE="${FILE%.txt}.html"
+            pandoc "$FILE" -f markdown -t html -o "$HTML_FILE"
+          done
+          echo "✅ HTML changelogs created."
+
+      - name: Upload changelogs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelogs
+          path: changelogs
