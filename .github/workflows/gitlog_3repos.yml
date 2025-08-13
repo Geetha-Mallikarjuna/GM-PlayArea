@@ -3,25 +3,25 @@ name: Gitlog
 on:
   workflow_dispatch:
     inputs:
-      from_tag_repo_1:
-        description: 'From tag for repo 1'
+      from_tag_GM_PlayArea:
+        description: 'From tag for Geetha-Mallikarjuna/GM-PlayArea'
         required: true
-      to_tag_repo_1:
-        description: 'To tag for repo 1'
-        required: true
-
-      from_tag_repo_2:
-        description: 'From tag for repo 2'
-        required: true
-      to_tag_repo_2:
-        description: 'To tag for repo 2'
+      to_tag_GM_PlayArea:
+        description: 'To tag for Geetha-Mallikarjuna/GM-PlayArea'
         required: true
 
-      from_tag_repo_3:
-        description: 'From tag for repo 3'
+      from_tag_GM_PlayArea_2:
+        description: 'From tag for Geetha-Mallikarjuna/GM-PlayArea-2'
         required: true
-      to_tag_repo_3:
-        description: 'To tag for repo 3'
+      to_tag_GM_PlayArea_2:
+        description: 'To tag for Geetha-Mallikarjuna/GM-PlayArea-2'
+        required: true
+
+      from_tag_GM_PlayArea_3:
+        description: 'From tag for Geetha-Mallikarjuna/GM-PlayArea-3'
+        required: true
+      to_tag_GM_PlayArea_3:
+        description: 'To tag for Geetha-Mallikarjuna/GM-PlayArea-3'
         required: true
 
       new_tag:
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}  # PAT with repo access
+      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
       - name: Install dependencies
@@ -45,24 +45,23 @@ jobs:
         run: |
           mkdir changelogs
 
-          # Define fixed repo list
+          # Define repos (must match input names below)
           REPOS=(
             "Geetha-Mallikarjuna/GM-PlayArea"
             "Geetha-Mallikarjuna/GM-PlayArea-2"
             "Geetha-Mallikarjuna/GM-PlayArea-3"
           )
 
-          # Match inputs by index
           FROM_TAGS=(
-            "${{ inputs.from_tag_repo_1 }}"
-            "${{ inputs.from_tag_repo_2 }}"
-            "${{ inputs.from_tag_repo_3 }}"
+            "${{ inputs.from_tag_GM_PlayArea }}"
+            "${{ inputs.from_tag_GM_PlayArea_2 }}"
+            "${{ inputs.from_tag_GM_PlayArea_3 }}"
           )
 
           TO_TAGS=(
-            "${{ inputs.to_tag_repo_1 }}"
-            "${{ inputs.to_tag_repo_2 }}"
-            "${{ inputs.to_tag_repo_3 }}"
+            "${{ inputs.to_tag_GM_PlayArea }}"
+            "${{ inputs.to_tag_GM_PlayArea_2 }}"
+            "${{ inputs.to_tag_GM_PlayArea_3 }}"
           )
 
           NEW_TAG="${{ inputs.new_tag }}"
@@ -79,11 +78,10 @@ jobs:
             cd "$REPO_NAME"
             git fetch --tags
 
-            # Generate changelog
             LOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
 
             if [[ -z "$LOG" ]]; then
-              echo "⚠️ No commits between $FROM and $TO"
+              echo "⚠️ No commits found between $FROM and $TO for $REPO"
               cd ..
               rm -rf "$REPO_NAME"
               continue
@@ -94,4 +92,34 @@ jobs:
             echo "" >> "$FILE"
             echo "$LOG" >> "$FILE"
 
-            # Tag same commit as TO tag
+            # Tag the same commit as TO tag
+            COMMIT=$(git rev-list -n 1 "$TO")
+
+            if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+              echo "⚠️ Tag $NEW_TAG already exists in $REPO — skipping"
+            else
+              git tag "$NEW_TAG" "$COMMIT"
+              git push origin "$NEW_TAG"
+              echo "✅ Pushed $NEW_TAG to $REPO"
+            fi
+
+            cd ..
+            rm -rf "$REPO_NAME"
+          done
+
+          # Combine all changelogs
+          cat changelogs/*.txt > changelogs/changelogs-summary.txt
+          echo "✅ Combined changelog:"
+          cat changelogs/changelogs-summary.txt
+
+      - name: Convert changelogs to HTML
+        run: |
+          for FILE in changelogs/*.txt; do
+            pandoc "$FILE" -f markdown -t html -o "${FILE%.txt}.html"
+          done
+
+      - name: Upload changelog artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelogs
+          path: changelogs
