@@ -43,11 +43,6 @@ jobs:
           sudo apt update
           sudo apt install -y gh
 
-      - name: Authenticate GitHub CLI
-        run: gh auth login --with-token <<< "${{ secrets.PERSONAL_TOKEN }}"
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
-
       - name: Create releases and collect changelogs
         run: |
           mkdir changelogs
