@@ -52,17 +52,35 @@ jobs:
         run: |
           mkdir changelogs
 
-          declare -a REPOS=(
+          # Define fixed repos
+          REPOS=(
             "Geetha-Mallikarjuna/GM-PlayArea"
             "Geetha-Mallikarjuna/GM-PlayArea-2"
             "Geetha-Mallikarjuna/GM-PlayArea-3"
           )
 
-          for i in 1 2 3; do
-            REPO=${REPOS[$((i-1))]}
-            FROM=$(eval echo "${{ inputs.from_tag_$i }}")
-            TO=$(eval echo "${{ inputs.to_tag_$i }}")
-            TITLE=$(eval echo "${{ inputs.title_$i }}")
+          # Inputs from workflow_dispatch
+          FROM_TAGS=(
+            "${{ inputs.from_tag_1 }}"
+            "${{ inputs.from_tag_2 }}"
+            "${{ inputs.from_tag_3 }}"
+          )
+          TO_TAGS=(
+            "${{ inputs.to_tag_1 }}"
+            "${{ inputs.to_tag_2 }}"
+            "${{ inputs.to_tag_3 }}"
+          )
+          TITLES=(
+            "${{ inputs.title_1 }}"
+            "${{ inputs.title_2 }}"
+            "${{ inputs.title_3 }}"
+          )
+
+          for i in 0 1 2; do
+            REPO="${REPOS[$i]}"
+            FROM="${FROM_TAGS[$i]}"
+            TO="${TO_TAGS[$i]}"
+            TITLE="${TITLES[$i]}"
 
             if [[ -z "$TITLE" ]]; then
               TITLE="Release $TO"
@@ -80,11 +98,13 @@ jobs:
               continue
             fi
 
+            # Save changelog
             FILE="changelogs/changelog-${REPO//\//_}.txt"
             echo "🔖 $REPO: $FROM → $TO" > "$FILE"
             echo "" >> "$FILE"
             echo "$NOTES" >> "$FILE"
 
+            # Save notes for release creation
             echo "$NOTES" > notes.txt
 
             echo "🚀 Creating release $TO in $REPO"
@@ -96,7 +116,7 @@ jobs:
             echo "✅ Release created: $REPO@$TO"
           done
 
-          echo "📋 Changelogs summary:"
+          echo "📋 Combined changelogs:"
           cat changelogs/* > changelogs/changelogs-summary.txt
           cat changelogs/changelogs-summary.txt
         env:
