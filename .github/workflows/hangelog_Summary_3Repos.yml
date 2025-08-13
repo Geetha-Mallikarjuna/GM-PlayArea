@@ -1,0 +1,106 @@
+name: Generate Changelog Summary for 3 Repos
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_tag_1:
+        description: 'From tag for Repo 1'
+        required: true
+      to_tag_1:
+        description: 'To tag for Repo 1'
+        required: true
+
+      from_tag_2:
+        description: 'From tag for Repo 2'
+        required: true
+      to_tag_2:
+        description: 'To tag for Repo 2'
+        required: true
+
+      from_tag_3:
+        description: 'From tag for Repo 3'
+        required: true
+      to_tag_3:
+        description: 'To tag for Repo 3'
+        required: true
+
+jobs:
+  changelog-only:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install GitHub CLI and Pandoc
+        run: |
+          sudo apt update
+          sudo apt install -y gh pandoc
+
+      - name: Authenticate GitHub CLI
+        run: gh auth login --with-token <<< "${{ secrets.PERSONAL_TOKEN }}"
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+
+      - name: Generate changelogs (Markdown)
+        run: |
+          mkdir changelogs
+
+          # Fixed repositories
+          REPOS=(
+            "Geetha-Mallikarjuna/GM-PlayArea"
+            "Geetha-Mallikarjuna/GM-PlayArea-2"
+            "Geetha-Mallikarjuna/GM-PlayArea-3"
+          )
+
+          FROM_TAGS=(
+            "${{ inputs.from_tag_1 }}"
+            "${{ inputs.from_tag_2 }}"
+            "${{ inputs.from_tag_3 }}"
+          )
+          TO_TAGS=(
+            "${{ inputs.to_tag_1 }}"
+            "${{ inputs.to_tag_2 }}"
+            "${{ inputs.to_tag_3 }}"
+          )
+
+          for i in 0 1 2; do
+            REPO="${REPOS[$i]}"
+            FROM="${FROM_TAGS[$i]}"
+            TO="${TO_TAGS[$i]}"
+
+            echo "📦 Generating changelog for $REPO: $FROM → $TO"
+
+            NOTES=$(gh api repos/$REPO/releases/generate-notes \
+              -f tag_name="$TO" \
+              -f previous_tag_name="$FROM" \
+              -q .body)
+
+            if [[ -z "$NOTES" ]]; then
+              echo "⚠️ No changelog generated for $REPO"
+              continue
+            fi
+
+            FILE_MD="changelogs/changelog-${REPO//\//_}.txt"
+            echo "🔖 $REPO: $FROM → $TO" > "$FILE_MD"
+            echo "" >> "$FILE_MD"
+            echo "$NOTES" >> "$FILE_MD"
+          done
+
+          # Combine all into one summary (Markdown)
+          cat changelogs/*.txt > changelogs/changelogs-summary.txt
+
+          echo "✅ Markdown changelogs generated:"
+          cat changelogs/changelogs-summary.txt
+
+      - name: Convert changelogs to HTML
+        run: |
+          for FILE in changelogs/*.txt; do
+            HTML_FILE="${FILE%.txt}.html"
+            pandoc "$FILE" -f markdown -t html -o "$HTML_FILE"
+          done
+
+          echo "✅ HTML versions created."
+
+      - name: Upload all changelogs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelogs
+          path: changelogs
