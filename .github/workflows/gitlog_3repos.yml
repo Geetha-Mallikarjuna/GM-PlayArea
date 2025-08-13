@@ -1,4 +1,4 @@
-name: Generate Changelog Summary and Push Unified Tag
+name: Gitlog
 
 on:
   workflow_dispatch:
