@@ -1,4 +1,4 @@
-name: Generate Changelog Summary for 3 Repos (Messages Only)
+name: Gitlog only
 
 on:
   workflow_dispatch:
