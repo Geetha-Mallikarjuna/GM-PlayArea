@@ -28,7 +28,7 @@ jobs:
 
       - name: Parse release matrix and create releases
         run: |
-          echo "${{ inputs.release_matrix }}" > matrix.json
+          printf '%s\n' "${{ inputs.release_matrix }}" > matrix.json
           COUNT=$(jq length matrix.json)
           echo "📦 Processing $COUNT releases..."
 
