@@ -3,25 +3,25 @@ name: Gitlog
 on:
   workflow_dispatch:
     inputs:
-      from_tag_GM_PlayArea:
-        description: 'From tag for Geetha-Mallikarjuna/GM-PlayArea'
+      from_tag_repo_1:
+        description: 'From tag for repo 1'
         required: true
-      to_tag_GM_PlayArea:
-        description: 'To tag for Geetha-Mallikarjuna/GM-PlayArea'
-        required: true
-
-      from_tag_GM_PlayArea_2:
-        description: 'From tag for Geetha-Mallikarjuna/GM-PlayArea-2'
-        required: true
-      to_tag_GM_PlayArea_2:
-        description: 'To tag for Geetha-Mallikarjuna/GM-PlayArea-2'
+      to_tag_repo_1:
+        description: 'To tag for repo 1'
         required: true
 
-      from_tag_GM_PlayArea_3:
-        description: 'From tag for Geetha-Mallikarjuna/GM-PlayArea-3'
+      from_tag_repo_2:
+        description: 'From tag for repo 2'
         required: true
-      to_tag_GM_PlayArea_3:
-        description: 'To tag for Geetha-Mallikarjuna/GM-PlayArea-3'
+      to_tag_repo_2:
+        description: 'To tag for repo 2'
+        required: true
+
+      from_tag_repo_3:
+        description: 'From tag for repo 3'
+        required: true
+      to_tag_repo_3:
+        description: 'To tag for repo 3'
         required: true
 
       new_tag:
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}  # PAT with repo access
 
     steps:
       - name: Install dependencies
@@ -45,23 +45,24 @@ jobs:
         run: |
           mkdir changelogs
 
-          # Define repos (must match input names below)
+          # Define fixed repo list
           REPOS=(
             "Geetha-Mallikarjuna/GM-PlayArea"
             "Geetha-Mallikarjuna/GM-PlayArea-2"
             "Geetha-Mallikarjuna/GM-PlayArea-3"
           )
 
+          # Match inputs by index
           FROM_TAGS=(
-            "${{ inputs.from_tag_GM_PlayArea }}"
-            "${{ inputs.from_tag_GM_PlayArea_2 }}"
-            "${{ inputs.from_tag_GM_PlayArea_3 }}"
+            "${{ inputs.from_tag_repo_1 }}"
+            "${{ inputs.from_tag_repo_2 }}"
+            "${{ inputs.from_tag_repo_3 }}"
           )
 
           TO_TAGS=(
-            "${{ inputs.to_tag_GM_PlayArea }}"
-            "${{ inputs.to_tag_GM_PlayArea_2 }}"
-            "${{ inputs.to_tag_GM_PlayArea_3 }}"
+            "${{ inputs.to_tag_repo_1 }}"
+            "${{ inputs.to_tag_repo_2 }}"
+            "${{ inputs.to_tag_repo_3 }}"
           )
 
           NEW_TAG="${{ inputs.new_tag }}"
@@ -78,10 +79,11 @@ jobs:
             cd "$REPO_NAME"
             git fetch --tags
 
+            # Generate changelog
             LOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
 
             if [[ -z "$LOG" ]]; then
-              echo "⚠️ No commits found between $FROM and $TO for $REPO"
+              echo "⚠️ No commits between $FROM and $TO"
               cd ..
               rm -rf "$REPO_NAME"
               continue
@@ -92,11 +94,13 @@ jobs:
             echo "" >> "$FILE"
             echo "$LOG" >> "$FILE"
 
-            # Tag the same commit as TO tag
+            # Tag same commit as TO tag
             COMMIT=$(git rev-list -n 1 "$TO")
+            echo "🔗 Tagging $COMMIT as $NEW_TAG"
 
+            # Only tag if it doesn't already exist
             if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-              echo "⚠️ Tag $NEW_TAG already exists in $REPO — skipping"
+              echo "⚠️ Tag $NEW_TAG already exists in $REPO — skipping push"
             else
               git tag "$NEW_TAG" "$COMMIT"
               git push origin "$NEW_TAG"
@@ -107,9 +111,9 @@ jobs:
             rm -rf "$REPO_NAME"
           done
 
-          # Combine all changelogs
+          # Combine all changelogs into one summary
           cat changelogs/*.txt > changelogs/changelogs-summary.txt
-          echo "✅ Combined changelog:"
+          echo "✅ Combined Markdown Changelog:"
           cat changelogs/changelogs-summary.txt
 
       - name: Convert changelogs to HTML
@@ -118,7 +122,7 @@ jobs:
             pandoc "$FILE" -f markdown -t html -o "${FILE%.txt}.html"
           done
 
-      - name: Upload changelog artifacts
+      - name: Upload changelog artifact
         uses: actions/upload-artifact@v4
         with:
           name: changelogs
