@@ -26,11 +26,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
-      - name: Authenticate with GitHub using PAT
-        run: gh auth login --with-token <<< "${{ secrets.PERSONAL_TOKEN }}"
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
-
       - name: Parse release matrix and create releases
         run: |
           echo "${{ inputs.release_matrix }}" > matrix.json
