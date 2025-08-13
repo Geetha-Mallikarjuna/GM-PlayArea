@@ -78,13 +78,15 @@ jobs:
             echo "" >> "$FILE_MD"
             echo "$NOTES" >> "$FILE_MD"
           done
-
+          
           # Combine all into one summary (Markdown)
           cat changelogs/*.txt > changelogs/changelogs-summary.txt
 
           echo "✅ Markdown changelogs generated:"
           cat changelogs/changelogs-summary.txt
-
+          env:
+            GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+          
       - name: Convert changelogs to HTML
         run: |
           for FILE in changelogs/*.txt; do
