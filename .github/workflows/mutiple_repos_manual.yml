@@ -23,6 +23,8 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y gh jq
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
       - name: Authenticate with GitHub using PAT
         run: gh auth login --with-token <<< "${{ secrets.PERSONAL_TOKEN }}"
