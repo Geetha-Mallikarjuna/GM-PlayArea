@@ -79,13 +79,21 @@ jobs:
 
             LOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
             echo " Tag $NEW_TAG"
-            if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-              echo "⚠️ Tag $NEW_TAG already exists in $REPO — skipping"
+            
+            COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
+            echo "Commit $COMMIT"
+            if [[ -z "$COMMIT" ]]; then
+              echo "❌ Failed to resolve tag '$TO' in $REPO. Skipping new tag."
             else
-              git tag "$NEW_TAG" "$COMMIT"
-              git push origin "$NEW_TAG"
-              echo "✅ Pushed $NEW_TAG to $REPO"
+              if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+                echo "⚠️ Tag $NEW_TAG already exists in $REPO — skipping"
+              else
+                git tag "$NEW_TAG" "$COMMIT"
+                git push origin "$NEW_TAG"
+                echo "✅ Pushed $NEW_TAG to $REPO"
+              fi
             fi
+      
             cd ..
             rm -rf "$REPO_DIR"
 
