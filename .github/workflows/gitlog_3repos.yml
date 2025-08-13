@@ -24,6 +24,10 @@ on:
         description: 'To tag for Repo 3'
         required: true
 
+      new_tag:
+        description: 'New tag to apply at the same commit as To tag (e.g., Customer-Release-1.0)'
+        required: true
+
 jobs:
   changelog-only:
     runs-on: ubuntu-latest
@@ -59,6 +63,8 @@ jobs:
             "${{ inputs.to_tag_3 }}"
           )
 
+          NEW_TAG="${{ inputs.new_tag }}"
+
           for i in 0 1 2; do
             REPO="${REPOS[$i]}"
             FROM="${FROM_TAGS[$i]}"
@@ -73,6 +79,13 @@ jobs:
 
             LOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
 
+            if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+              echo "⚠️ Tag $NEW_TAG already exists in $REPO — skipping"
+            else
+              git tag "$NEW_TAG" "$COMMIT"
+              git push origin "$NEW_TAG"
+              echo "✅ Pushed $NEW_TAG to $REPO"
+            fi
             cd ..
             rm -rf "$REPO_DIR"
 
