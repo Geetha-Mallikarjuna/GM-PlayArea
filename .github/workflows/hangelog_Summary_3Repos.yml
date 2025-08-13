@@ -34,11 +34,6 @@ jobs:
           sudo apt update
           sudo apt install -y gh pandoc
 
-      - name: Authenticate GitHub CLI
-        run: gh auth login --with-token <<< "${{ secrets.PERSONAL_TOKEN }}"
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
-
       - name: Generate changelogs (Markdown)
         run: |
           mkdir changelogs
