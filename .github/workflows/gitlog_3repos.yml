@@ -78,7 +78,7 @@ jobs:
             git fetch --tags
 
             LOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
-
+            echo " Tag $NEW_TAG"
             if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
               echo "⚠️ Tag $NEW_TAG already exists in $REPO — skipping"
             else
