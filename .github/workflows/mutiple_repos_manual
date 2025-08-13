@@ -1,0 +1,66 @@
+name: Manual Cross-Repo Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_matrix:
+        description: |
+          JSON array of release targets.
+          Example:
+          [
+            {"repo": "org/repo1", "from": "v1.0.0", "to": "v1.1.0", "title": "Release 1.1.0"},
+            {"repo": "org/repo2", "from": "v2.3.0", "to": "v2.4.0"}
+          ]
+        required: true
+        type: string
+
+jobs:
+  create-releases:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install GitHub CLI and jq
+        run: |
+          sudo apt update
+          sudo apt install -y gh jq
+
+      - name: Authenticate with GitHub using PAT
+        run: gh auth login --with-token <<< "${{ secrets.PERSONAL_TOKEN }}"
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+
+      - name: Parse release matrix and create releases
+        run: |
+          echo "${{ inputs.release_matrix }}" > matrix.json
+          COUNT=$(jq length matrix.json)
+          echo "📦 Processing $COUNT releases..."
+
+          for i in $(seq 0 $(($COUNT - 1))); do
+            REPO=$(jq -r ".[$i].repo" matrix.json)
+            FROM=$(jq -r ".[$i].from" matrix.json)
+            TO=$(jq -r ".[$i].to" matrix.json)
+            TITLE=$(jq -r ".[$i].title // \"Release $TO\"" matrix.json)
+
+            echo "🚀 Creating release in $REPO from $FROM to $TO"
+
+            NOTES=$(gh api repos/$REPO/releases/generate-notes \
+              -f tag_name="$TO" \
+              -f previous_tag_name="$FROM" \
+              -q .body)
+
+            if [[ -z "$NOTES" ]]; then
+              echo "❌ Failed to generate release notes for $REPO"
+              continue
+            fi
+
+            echo "$NOTES" > notes.txt
+
+            gh release create "$TO" \
+              --repo "$REPO" \
+              --title "$TITLE" \
+              --notes-file notes.txt
+
+            echo "✅ Created release $TO for $REPO"
+          done
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
