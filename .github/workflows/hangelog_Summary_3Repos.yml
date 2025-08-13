@@ -27,6 +27,8 @@ on:
 jobs:
   changelog-only:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 👈 Set once for all steps
 
     steps:
       - name: Install GitHub CLI and Pandoc
