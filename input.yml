@@ -1,0 +1,88 @@
+gcp_project: robust-summit-405709
+gcp_location: europe-west2
+
+require_files:
+    - repository: ap-packages
+      package: ap-startup
+      destination: sw_packaging/startup_scripts/cu/
+      version: 0.2.292
+      name: cbng-cu-startup-0.2.292.tar.gz
+
+    - repository: ap-packages
+      package: ap-startup
+      destination: sw_packaging/startup_scripts/du/
+      version: 0.2.292
+      name: cbng-du-startup-0.2.292.tar.gz
+
+
+    - repository: nms-agent
+      package: cbng-nms-agent
+      destination: sw_packaging/nms_agent/
+      version: 1.9.908
+      name: cbng-nms-agent-1.9.908.tar.gz
+
+
+    - repository: ap-packages
+      package: delta-sw-cu
+      destination: sw_packaging/suppliers/delta/cu_54
+      version: sdk-release-20241217-cuv54-duv217
+      name: rootfs_lsdk2004_ubuntu_main_arm64.tgz
+
+    - repository: ap-packages
+      package: delta-sw-cu
+      destination: sw_packaging/suppliers/delta/cu_54
+      version: sdk-release-20241217-cuv54-duv217
+      name: bootpartition_LS_arm64_lts_4.19.tgz
+
+
+    - repository: ap-packages
+      package: delta-sw-du
+      destination: sw_packaging/suppliers/delta/du_217
+      version: sdk-release-20241217-cuv54-duv217
+      name: rootfs_lsdk2004_ubuntu_main_arm64.tgz
+
+    - repository: ap-packages
+      package: delta-sw-du
+      destination: sw_packaging/suppliers/delta/du_217
+      version: sdk-release-20241217-cuv54-duv217
+      name: bootpartition_LS_arm64_lts_4.19.tgz
+
+
+    - repository: ap-packages
+      package: synergy-sw
+      destination: sw_packaging/suppliers/synergy/
+      version: r5.4.2-isc-release
+      name: c19010_R5.4.2-ISC-FR2-2025-05-06-081605-dd31688e8-dd31688_daily.tgz
+
+
+    - repository: ap-packages
+      package: radisys-sw
+      destination: sw_packaging/suppliers/radisys/cu/
+      version: 2.1.14
+      name: TRILLIUM_5GNR_NXP_GNB_CU_SYNERGY_MMWAVE_SYSREPO_BIN_REL_P2.1.14.tar.gz
+
+    - repository: ap-packages
+      package: radisys-sw
+      destination: sw_packaging/suppliers/radisys/du/
+      version: 2.1.14
+      name: TRILLIUM_5GNR_NXP_GNB_DU_SYNERGY_MMWAVE_SYSREPO_BIN_REL_P2.1.14.tar.gz
+
+    - repository: ap-packages
+      package: radisys-sw
+      destination: sw_packaging/suppliers/radisys/
+      version: 2.1.8
+      name: TRILLIUM_5GNR_NXP_GNB_EVENT_API_BIN_REL_P2.1.8.tar.gz
+
+    - repository: ap-packages
+      package: radisys-sw
+      destination: sw_packaging/suppliers/radisys/
+      version: 5gcn-release-6.0.8
+      name: TRILLIUM_5GCN_NXP_DOCKER_BIN_REL_6.0.8_ARM.tar.gz
+      untar: True
+
+
+    - repository: ap-packages
+      package: mongo
+      destination: sw_packaging/suppliers/radisys/
+      version: 4.0.7
+      name: mongo4.0.7.tar
