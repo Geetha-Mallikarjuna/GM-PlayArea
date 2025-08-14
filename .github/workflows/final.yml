@@ -41,6 +41,11 @@ jobs:
           sudo apt update
           sudo apt install -y git pandoc
 
+      - name: Install yq v4
+        run: |
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          chmod +x /usr/bin/yq
+
       - name: Generate changelogs (commit messages only)
         run: |
           mkdir changelogs
