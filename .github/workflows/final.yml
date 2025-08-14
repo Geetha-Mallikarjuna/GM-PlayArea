@@ -146,7 +146,7 @@ jobs:
           echo "<h2>Package Versions</h2>" > table.html
           echo "<table border='1'>" >> table.html
           echo "<tr><th>Package</th><th>Name</th><th>Version</th></tr>" >> table.html
-          docker run --rm -v "$PWD":/workdir mikefarah/yq sh -c 'yq eval -o=json ".require_files[] | {package: .package, name: .name, version: .version}" input.yaml' | \
+          docker run --rm -v "$PWD":/workdir mikefarah/yq sh  'yq eval -o=json ".require_files[] | {package: .package, name: .name, version: .version}" input.yaml' | \
           jq -c '.' | while read -r row; do
             PACKAGE=$(echo "$row" | jq -r '.package')
             NAME=$(echo "$row" | jq -r '.name')
