@@ -156,9 +156,7 @@ jobs:
           done
 
           echo "</table>" >> table.html
-      
-      
-          
+                     
       - name: Combine changelogs and package table into summary.html
         run: |
           echo "<html><body>" > summary.html
