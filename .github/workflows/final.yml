@@ -33,27 +33,17 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}  # Use your PAT here
+      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
-      - name: Install git and pandoc
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install git, pandoc, and Python dependencies
         run: |
           sudo apt update
-          sudo apt install -y git pandoc
-
-      - name: Install yq v4 and jq
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-      
-          # Download yq v4 and install to /usr/local/bin
-          curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o yq
-          chmod +x yq
-          sudo mv yq /usr/local/bin/yq
-      
-          # Ensure we are using the right version
-          which yq
-          yq --version
+          sudo apt install -y git pandoc python3 python3-pip
+          pip install pyyaml
 
       - name: Generate changelogs (commit messages only)
         run: |
@@ -100,8 +90,6 @@ jobs:
             if [[ -z "$COMMIT" ]]; then
               echo "❌ Failed to resolve tag '$TO' in $REPO. Skipping new tag."
             else
-              cd "$REPO_NAME"
-              # Ensure remote uses token
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
             
               if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
@@ -112,7 +100,7 @@ jobs:
                 echo "✅ Pushed $NEW_TAG to $REPO"
               fi
             fi
-      
+
             cd ..
             rm -rf "$REPO_DIR"
 
@@ -127,39 +115,43 @@ jobs:
             echo "$LOG" >> "$FILE_MD"
           done
 
-          # Combine all changelogs into one summary file
-          cat changelogs/*.txt > changelogs/changelogs-summary.txt
+      - name: Parse package info from YAML and save to Markdown
+        run: |
+          echo "📄 Extracting package info from input.yaml"
+          python3 - <<EOF
+import yaml
+import os
+
+os.makedirs("changelogs", exist_ok=True)
+
+with open("input.yaml", "r") as f:
+    data = yaml.safe_load(f)
+
+require_files = data.get("require_files", [])
+
+with open("changelogs/packages-info.txt", "w") as out:
+    out.write("# 📦 Package Summary from input.yaml\n\n")
+    for item in require_files:
+        package = item.get("package", "N/A")
+        version = item.get("version", "N/A")
+        name = item.get("name", "N/A")
+        out.write(f"- **Package:** {package}, **Version:** {version}, **Name:** `{name}`\n")
+EOF
+
+      - name: Combine all changelogs into one summary file
+        run: |
+          cat changelogs/changelog-*.txt changelogs/packages-info.txt > changelogs/changelogs-summary.txt
 
           echo "✅ Markdown changelogs generated:"
           cat changelogs/changelogs-summary.txt
 
-      - name: Convert Markdown changelogs to HTML
+      - name: Convert final changelog summary to HTML
         run: |
-          for FILE in changelogs/*.txt; do
-            HTML_FILE="${FILE%.txt}.html"
-            pandoc "$FILE" -f markdown -t html -o "$HTML_FILE"
-          done
-          echo "✅ HTML changelogs created."
+          pandoc changelogs/changelogs-summary.txt -f markdown -t html -o changelogs/changelogs-summary.html
+          echo "✅ HTML summary created at changelogs/changelogs-summary.html"
 
-      - name: Generate HTML table from input.yaml
-        run: |
-          yq eval input.yaml
-                     
-      - name: Combine changelogs and package table into summary.html
-        run: |
-          echo "<html><body>" > summary.html
-          echo "<h1>Release Summary – ${{ inputs.new_tag }}</h1>" >> summary.html
-
-          echo "<h2>Changelog Summary</h2>" >> summary.html
-          cat changelogs/changelogs-summary.html >> summary.html
-
-          echo "<hr/>" >> summary.html
-          cat table.html >> summary.html
-
-          echo "</body></html>" >> summary.html
-          
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-summary
-          path: summary.html
+          name: changelogs
+          path: changelogs
