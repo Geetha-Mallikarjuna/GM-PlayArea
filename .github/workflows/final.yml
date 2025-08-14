@@ -41,14 +41,19 @@ jobs:
           sudo apt update
           sudo apt install -y git pandoc
 
-      - name: Install jq and yq v4
+      - name: Install yq v4 and jq
         run: |
-         sudo apt-get update
-         sudo apt-get install -y jq
-         curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o yq
-         chmod +x yq
-         sudo mv yq /usr/local/bin/yq
-         yq --version
+          sudo apt-get update
+          sudo apt-get install -y jq
+      
+          # Download yq v4 and install to /usr/local/bin
+          curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o yq
+          chmod +x yq
+          sudo mv yq /usr/local/bin/yq
+      
+          # Ensure we are using the right version
+          which yq
+          yq --version
 
       - name: Generate changelogs (commit messages only)
         run: |
@@ -142,7 +147,7 @@ jobs:
           echo "<table border='1'>" >> table.html
           echo "<tr><th>Package</th><th>Name</th><th>Version</th></tr>" >> table.html
       
-          yq eval -o=json '.require_files[] | {package: .package, name: .name, version: .version}' input.yaml | jq -c '.' | while read row; do
+          /usr/local/bin/yq eval -o=json '.require_files[] | {package: .package, name: .name, version: .version}' input.yaml | jq -c '.' | while read row; do
             PACKAGE=$(echo "$row" | jq -r '.package')
             NAME=$(echo "$row" | jq -r '.name')
             VERSION=$(echo "$row" | jq -r '.version')
