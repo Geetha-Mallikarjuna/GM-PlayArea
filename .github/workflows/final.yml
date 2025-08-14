@@ -143,6 +143,7 @@ jobs:
 
       - name: Generate HTML table from input.yaml
         run: |
+          yq eval input.yaml
           echo "<h2>Package Versions</h2>" > table.html
           echo "<table border='1'>" >> table.html
           echo "<tr><th>Package</th><th>Name</th><th>Version</th></tr>" >> table.html
