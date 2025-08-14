@@ -115,33 +115,10 @@ jobs:
             echo "$LOG" >> "$FILE_MD"
           done
 
-      - name: Parse package info from YAML and save to Markdown
+      - name: Run Python script to extract package info
         run: |
-          echo "📄 Creating parser.py script"
-          mkdir -p changelogs
-
-          cat << 'EOF' > parser.py
-import yaml
-import os
-
-with open('input.yaml', 'r') as f:
-    data = yaml.safe_load(f)
-
-require_files = data.get('require_files', [])
-
-os.makedirs('changelogs', exist_ok=True)
-with open('changelogs/packages-info.txt', 'w') as out:
-    out.write('# 📦 Package Summary from input.yaml\\n\\n')
-    for item in require_files:
-        package = item.get('package', 'N/A')
-        version = item.get('version', 'N/A')
-        name = item.get('name', 'N/A')
-        out.write(f'- **Package:** {package}, **Version:** {version}, **Name:** `{name}`\\n')
-EOF
-
-          echo "▶️ Running parser.py"
-          python3 parser.py
-
+          pip install pyyaml
+          python3 .github/scripts/parse_yaml.py
 
       - name: Combine all changelogs into one summary file
         run: |
