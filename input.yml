@@ -14,14 +14,12 @@ require_files:
       version: 0.2.292
       name: cbng-du-startup-0.2.292.tar.gz
 
-
     - repository: nms-agent
       package: cbng-nms-agent
       destination: sw_packaging/nms_agent/
       version: 1.9.908
       name: cbng-nms-agent-1.9.908.tar.gz
 
-
     - repository: ap-packages
       package: delta-sw-cu
       destination: sw_packaging/suppliers/delta/cu_54
@@ -34,7 +32,6 @@ require_files:
       version: sdk-release-20241217-cuv54-duv217
       name: bootpartition_LS_arm64_lts_4.19.tgz
 
-
     - repository: ap-packages
       package: delta-sw-du
       destination: sw_packaging/suppliers/delta/du_217
@@ -46,14 +43,12 @@ require_files:
       destination: sw_packaging/suppliers/delta/du_217
       version: sdk-release-20241217-cuv54-duv217
       name: bootpartition_LS_arm64_lts_4.19.tgz
-
 
     - repository: ap-packages
       package: synergy-sw
       destination: sw_packaging/suppliers/synergy/
       version: r5.4.2-isc-release
       name: c19010_R5.4.2-ISC-FR2-2025-05-06-081605-dd31688e8-dd31688_daily.tgz
-
 
     - repository: ap-packages
       package: radisys-sw
@@ -79,7 +74,6 @@ require_files:
       version: 5gcn-release-6.0.8
       name: TRILLIUM_5GCN_NXP_DOCKER_BIN_REL_6.0.8_ARM.tar.gz
       untar: True
-
 
     - repository: ap-packages
       package: mongo
