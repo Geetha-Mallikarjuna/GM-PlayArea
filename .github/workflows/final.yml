@@ -118,7 +118,7 @@ jobs:
       - name: Run Python script to extract package info
         run: |
           pip install pyyaml
-          python3 .github/scripts/parse_yaml.py
+          python3 parse_yaml.py
 
       - name: Combine all changelogs into one summary file
         run: |
