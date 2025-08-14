@@ -141,16 +141,16 @@ jobs:
           echo "<h2>Package Versions</h2>" > table.html
           echo "<table border='1'>" >> table.html
           echo "<tr><th>Package</th><th>Name</th><th>Version</th></tr>" >> table.html
-
-          yq -o=json '.require_files[] | {package: .package, name: .name, version: .version}' input.yaml | jq -c '.' | while read row; do
+      
+          yq eval -o=json '.require_files[] | {package: .package, name: .name, version: .version}' input.yaml | jq -c '.' | while read row; do
             PACKAGE=$(echo "$row" | jq -r '.package')
             NAME=$(echo "$row" | jq -r '.name')
             VERSION=$(echo "$row" | jq -r '.version')
             echo "<tr><td>${PACKAGE}</td><td>${NAME}</td><td>${VERSION}</td></tr>" >> table.html
           done
-
+      
           echo "</table>" >> table.html
-
+          
       - name: Combine changelogs and package table into summary.html
         run: |
           echo "<html><body>" > summary.html
