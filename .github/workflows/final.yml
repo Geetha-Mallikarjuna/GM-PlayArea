@@ -1,0 +1,162 @@
+name: Gitlog_final
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_tag_1:
+        description: 'From tag for Repo 1'
+        required: true
+      to_tag_1:
+        description: 'To tag for Repo 1'
+        required: true
+
+      from_tag_2:
+        description: 'From tag for Repo 2'
+        required: true
+      to_tag_2:
+        description: 'To tag for Repo 2'
+        required: true
+
+      from_tag_3:
+        description: 'From tag for Repo 3'
+        required: true
+      to_tag_3:
+        description: 'To tag for Repo 3'
+        required: true
+
+      new_tag:
+        description: 'New tag to apply at the same commit as To tag (e.g., Customer-Release-1.0)'
+        required: true
+
+jobs:
+  changelog-only:
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}  # Use your PAT here
+
+    steps:
+      - name: Install git and pandoc
+        run: |
+          sudo apt update
+          sudo apt install -y git pandoc
+
+      - name: Generate changelogs (commit messages only)
+        run: |
+          mkdir changelogs
+
+          REPOS=(
+            "Geetha-Mallikarjuna/GM-PlayArea"
+            "Geetha-Mallikarjuna/GM-PlayArea-2"
+            "Geetha-Mallikarjuna/GM-PlayArea-3"
+          )
+
+          FROM_TAGS=(
+            "${{ inputs.from_tag_1 }}"
+            "${{ inputs.from_tag_2 }}"
+            "${{ inputs.from_tag_3 }}"
+          )
+
+          TO_TAGS=(
+            "${{ inputs.to_tag_1 }}"
+            "${{ inputs.to_tag_2 }}"
+            "${{ inputs.to_tag_3 }}"
+          )
+
+          NEW_TAG="${{ inputs.new_tag }}"
+
+          for i in 0 1 2; do
+            REPO="${REPOS[$i]}"
+            FROM="${FROM_TAGS[$i]}"
+            TO="${TO_TAGS[$i]}"
+            REPO_DIR=$(basename "$REPO")
+
+            echo "📦 Processing $REPO from $FROM to $TO"
+
+            git clone --quiet "https://github.com/$REPO.git"
+            cd "$REPO_DIR"
+            git fetch --tags
+
+            LOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
+            echo " Tag $NEW_TAG"
+            
+            COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
+            echo "Commit $COMMIT"
+
+            if [[ -z "$COMMIT" ]]; then
+              echo "❌ Failed to resolve tag '$TO' in $REPO. Skipping new tag."
+            else
+              cd "$REPO_NAME"
+              # Ensure remote uses token
+              git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
+            
+              if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+                echo "⚠️ Tag $NEW_TAG already exists in $REPO — skipping"
+              else
+                git tag "$NEW_TAG" "$COMMIT"
+                git push origin "$NEW_TAG"
+                echo "✅ Pushed $NEW_TAG to $REPO"
+              fi
+            fi
+      
+            cd ..
+            rm -rf "$REPO_DIR"
+
+            if [[ -z "$LOG" ]]; then
+              echo "⚠️ No commits found between $FROM and $TO for $REPO"
+              continue
+            fi
+
+            FILE_MD="changelogs/changelog-${REPO//\//_}.txt"
+            echo "🔖 $REPO: $FROM → $TO" > "$FILE_MD"
+            echo "" >> "$FILE_MD"
+            echo "$LOG" >> "$FILE_MD"
+          done
+
+          # Combine all changelogs into one summary file
+          cat changelogs/*.txt > changelogs/changelogs-summary.txt
+
+          echo "✅ Markdown changelogs generated:"
+          cat changelogs/changelogs-summary.txt
+
+      - name: Convert Markdown changelogs to HTML
+        run: |
+          for FILE in changelogs/*.txt; do
+            HTML_FILE="${FILE%.txt}.html"
+            pandoc "$FILE" -f markdown -t html -o "$HTML_FILE"
+          done
+          echo "✅ HTML changelogs created."
+
+      - name: Generate package version HTML table
+        run: |
+          echo "<h2>Package Versions</h2>" > table.html
+          echo "<table border='1'>" >> table.html
+          echo "<tr><th>Package</th><th>Name</th><th>Version</th></tr>" >> table.html
+
+          yq -o=json '.require_files[] | {package, name, version}' input.yaml | jq -c '.' | while read row; do
+            PACKAGE=$(echo "$row" | jq -r '.package')
+            NAME=$(echo "$row" | jq -r '.name')
+            VERSION=$(echo "$row" | jq -r '.version')
+            echo "<tr><td>${PACKAGE}</td><td>${NAME}</td><td>${VERSION}</td></tr>" >> table.html
+          done
+
+          echo "</table>" >> table.html
+
+      - name: Combine changelogs and package table into summary.html
+        run: |
+          echo "<html><body>" > summary.html
+          echo "<h1>Release Summary – ${{ inputs.new_tag }}</h1>" >> summary.html
+
+          echo "<h2>Changelog Summary</h2>" >> summary.html
+          cat changelogs/changelogs-summary.html >> summary.html
+
+          echo "<hr/>" >> summary.html
+          cat table.html >> summary.html
+
+          echo "</body></html>" >> summary.html
+          
+      - name: Upload changelogs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelogs
+          path: changelogs
