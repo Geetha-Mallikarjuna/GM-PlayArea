@@ -2,5 +2,5 @@ require_files:
   - repository: pa-packages
     package: ap-startup
     destination: sw_packaging/startup_scripts/cu/
-    version: 0.2.292
+    version: "0.2.292"
     name: xxxx-cu-startup-0.2.292.tar.gz
