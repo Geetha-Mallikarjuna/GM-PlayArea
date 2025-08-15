@@ -130,3 +130,12 @@ jobs:
         with:
           name: changelogs
           path: changelogs/changelogs-summary.html
+
+      - name: Tag the build if for release branches or main
+        id: Tag
+        if: (github.ref_name == 'main' || startsWith(github.ref_name, 'v')) 
+        run: |
+          VERSION=forap
+          git tag "$VERSION"
+          git push origin "$VERSION"
+          echo "✅ Tag $TAG_NAME created and pushed."
