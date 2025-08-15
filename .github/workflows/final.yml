@@ -111,18 +111,18 @@ jobs:
         run: |
           {
             for file in changelogs/changelog-*.txt; do
-              echo ""
+              echo ""                # Ensure paragraph break
               cat "$file"
-              echo ""
+              echo ""                # Another newline ensures block separation
             done
 
-            echo ""
+            echo ""                  # Spacer before the table
             cat changelogs/packages-info.txt
-          } > changelogs/changelogs-summary.txt
+          } > changelogs/changelogs-summary.md
 
       - name: Convert final changelog summary to HTML
         run: |
-          pandoc changelogs/changelogs-summary.txt -f markdown -t html -o changelogs/changelogs-summary.html
+          pandoc changelogs/changelogs-summary.md -f markdown -t html -o changelogs/changelogs-summary.html
 
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
