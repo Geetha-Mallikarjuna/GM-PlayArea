@@ -129,4 +129,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: changelogs
-          path: changelogs
+          path: changelogs/changelogs-summary.html
