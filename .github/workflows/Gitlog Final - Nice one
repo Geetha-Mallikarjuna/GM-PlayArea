@@ -1,0 +1,166 @@
+name: Gitlog Final - Nice one
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_tag_1:
+        description: 'From tag for Repo 1'
+        required: true
+      to_tag_1:
+        description: 'To tag for Repo 1'
+        required: true
+
+      from_tag_2:
+        description: 'From tag for Repo 2'
+        required: true
+      to_tag_2:
+        description: 'To tag for Repo 2'
+        required: true
+
+      from_tag_3:
+        description: 'From tag for Repo 3'
+        required: true
+      to_tag_3:
+        description: 'To tag for Repo 3'
+        required: true
+
+      new_tag:
+        description: 'New tag to apply at the same commit as To tag'
+        required: true
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+
+    steps:
+      # ----------------------------------------
+      # Step 1: Checkout this repository
+      # ----------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ----------------------------------------
+      # Step 2: Install required dependencies
+      # ----------------------------------------
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git pandoc python3 python3-pip
+          pip install pyyaml
+
+      # ----------------------------------------
+      # Step 3: Generate changelogs for all repos
+      # ----------------------------------------
+      - name: Generate changelogs
+        run: |
+          echo "📄 Creating changelog directory..."
+          mkdir -p changelogs
+
+          # Define the list of repositories and corresponding tags
+          REPOS=(
+            "Geetha-Mallikarjuna/GM-PlayArea"
+            "Geetha-Mallikarjuna/GM-PlayArea-2"
+            "Geetha-Mallikarjuna/GM-PlayArea-3"
+          )
+
+          FROM_TAGS=(
+            "${{ inputs.from_tag_1 }}"
+            "${{ inputs.from_tag_2 }}"
+            "${{ inputs.from_tag_3 }}"
+          )
+
+          TO_TAGS=(
+            "${{ inputs.to_tag_1 }}"
+            "${{ inputs.to_tag_2 }}"
+            "${{ inputs.to_tag_3 }}"
+          )
+
+          NEW_TAG="${{ inputs.new_tag }}"
+
+          echo "🚀 Starting changelog generation loop..."
+          for i in 0 1 2; do
+            REPO="${REPOS[$i]}"
+            FROM="${FROM_TAGS[$i]}"
+            TO="${TO_TAGS[$i]}"
+            REPO_DIR=$(basename "$REPO")
+
+            echo ""
+            echo "🔧 Cloning $REPO"
+            git clone --quiet "https://github.com/$REPO.git"
+            cd "$REPO_DIR"
+
+            echo "🔍 Fetching tags..."
+            git fetch --tags
+
+            # Get commit hash for the target tag
+            COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
+
+            if [[ -n "$COMMIT" ]]; then
+              echo "🏷️ Tagging $COMMIT with $NEW_TAG (if not already exists)"
+              git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
+              if ! git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+                git tag "$NEW_TAG" "$COMMIT"
+                git push origin "$NEW_TAG"
+              fi
+            fi
+
+            # Generate markdown changelog for this repo
+            FILE_MD="../changelogs/changelog-${REPO//\//_}.md"
+            {
+              echo "**🔖 $REPO: $FROM → $TO**"
+              echo ""
+              git log "$FROM".."$TO" --pretty=format:"- %s"
+              echo ""
+            } > "$FILE_MD"
+
+            cd ..
+            rm -rf "$REPO_DIR"
+          done
+
+      # ----------------------------------------
+      # Step 4: Run Python script for package info
+      # ----------------------------------------
+      - name: Run Python script to extract package info
+        run: |
+          echo "📦 Extracting package info using Python..."
+          python3 parse_yaml.py
+
+      # ----------------------------------------
+      # Step 5: Combine changelogs and package summary
+      # ----------------------------------------
+      - name: Combine changelogs and package summary
+        run: |
+          echo "📘 Combining changelogs into summary markdown..."
+          {
+            echo "# Change List" > changelogs/changelogs-summary.md
+
+            # Append each individual changelog
+            for file in changelogs/changelog-*.md; do
+              cat "$file"
+              echo ""
+            done
+
+            echo ""
+            cat changelogs/packages-info.txt
+          } >> changelogs/changelogs-summary.md
+
+      # ----------------------------------------
+      # Step 6: Convert changelog summary to HTML
+      # ----------------------------------------
+      - name: Convert summary to HTML
+        run: |
+          echo "🌐 Converting markdown summary to HTML..."
+          pandoc changelogs/changelogs-summary.md -f markdown -t html -o changelogs/changelogs-summary.html
+          echo "✅ HTML summary created at changelogs/changelogs-summary.html"
+
+      # ----------------------------------------
+      # Step 7: Upload changelogs as GitHub artifact
+      # ----------------------------------------
+      - name: Upload changelogs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelogs
+          path: changelogs/changelogs-summary.html
