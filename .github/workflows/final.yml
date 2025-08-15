@@ -47,7 +47,7 @@ jobs:
 
       - name: Generate changelogs (commit messages only)
         run: |
-          mkdir changelogs
+          mkdir -p changelogs
 
           REPOS=(
             "Geetha-Mallikarjuna/GM-PlayArea"
@@ -82,55 +82,42 @@ jobs:
             git fetch --tags
 
             LOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
-            echo " Tag $NEW_TAG"
-            
             COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
-            echo "Commit $COMMIT"
 
-            if [[ -z "$COMMIT" ]]; then
-              echo "❌ Failed to resolve tag '$TO' in $REPO. Skipping new tag."
-            else
+            if [[ -n "$COMMIT" ]]; then
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
-            
-              if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-                echo "⚠️ Tag $NEW_TAG already exists in $REPO — skipping"
-              else
+              if ! git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
                 git tag "$NEW_TAG" "$COMMIT"
                 git push origin "$NEW_TAG"
-                echo "✅ Pushed $NEW_TAG to $REPO"
               fi
             fi
 
             cd ..
             rm -rf "$REPO_DIR"
 
-            if [[ -z "$LOG" ]]; then
-              echo "⚠️ No commits found between $FROM and $TO for $REPO"
-              continue
+            if [[ -n "$LOG" ]]; then
+              FILE_MD="changelogs/changelog-${REPO//\//_}.txt"
+              {
+                echo "🔖 $REPO: $FROM → $TO"
+                echo "$LOG"
+              } > "$FILE_MD"
             fi
-
-            FILE_MD="changelogs/changelog-${REPO//\//_}.txt"
-            echo "🔖 $REPO: $FROM → $TO" > "$FILE_MD"
-            echo "" >> "$FILE_MD"
-            echo "$LOG" >> "$FILE_MD"
           done
 
       - name: Run Python script to extract package info
-        run: |
-          pip install pyyaml
-          python3 parse_yaml.py
+        run: python3 .github/scripts/parse_yaml.py
 
       - name: Combine all changelogs into one summary file
         run: |
-          cat changelogs/changelog-*.txt changelogs/packages-info.txt > changelogs/changelogs-summary.txt
-
-          echo "✅ Markdown changelogs generated:"
-          cat changelogs/changelogs-summary.txt
+          {
+            cat changelogs/changelog-*.txt
+            echo ""
+            cat changelogs/packages-info.txt
+          } > changelogs/changelogs-summary.txt
 
       - name: Convert final changelog summary to HTML
         run: |
           pandoc changelogs/changelogs-summary.txt -f markdown -t html -o changelogs/changelogs-summary.html
-          echo "✅ HTML summary created at changelogs/changelogs-summary.html"
 
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
