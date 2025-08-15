@@ -1,4 +1,4 @@
-name: Gitlog Final - Nice one
+name: Generate Release Notes
 
 on:
   workflow_dispatch:
