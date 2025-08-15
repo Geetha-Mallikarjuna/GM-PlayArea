@@ -110,6 +110,7 @@ jobs:
       - name: Combine changelogs and package summary
         run: |
           {
+            echo "# Change List" > changelogs/changelogs-summary.md
             for file in changelogs/changelog-*.md; do
               cat "$file"
               echo ""
@@ -117,7 +118,7 @@ jobs:
 
             echo ""
             cat changelogs/packages-info.txt
-          } > changelogs/changelogs-summary.md
+          } >> changelogs/changelogs-summary.md
 
       - name: Convert summary to HTML
         run: |
