@@ -93,7 +93,7 @@ jobs:
 
             FILE_MD="../changelogs/changelog-${REPO//\//_}.md"
             {
-              echo "🔖 $REPO: $FROM → $TO"
+              echo "**🔖 $REPO: $FROM → $TO**"
               echo ""
               git log "$FROM".."$TO" --pretty=format:"- %s"
               echo ""
