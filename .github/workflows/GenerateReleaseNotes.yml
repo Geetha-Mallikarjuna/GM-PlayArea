@@ -4,24 +4,24 @@ on:
   workflow_dispatch:
     inputs:
       from_tag_1:
-        description: 'From tag for Repo 1'
+        description: 'From tag for Embedded_utilities'
         required: true
       to_tag_1:
-        description: 'To tag for Repo 1'
+        description: 'To tag for Embedded_utilities'
         required: true
 
       from_tag_2:
-        description: 'From tag for Repo 2'
+        description: 'From tag for ap-startup'
         required: true
       to_tag_2:
-        description: 'To tag for Repo 2'
+        description: 'To tag for ap-startup'
         required: true
 
       from_tag_3:
-        description: 'From tag for Repo 3'
+        description: 'From tag for cloud-nms-agent'
         required: true
       to_tag_3:
-        description: 'To tag for Repo 3'
+        description: 'To tag for cloud-nms-agent'
         required: true
 
       new_tag:
@@ -61,9 +61,9 @@ jobs:
 
           # Define the list of repositories and corresponding tags
           REPOS=(
-            "Geetha-Mallikarjuna/GM-PlayArea"
-            "Geetha-Mallikarjuna/GM-PlayArea-2"
-            "Geetha-Mallikarjuna/GM-PlayArea-3"
+            "CBNL/Embedded_utilities"
+            "CBNL/ap-startup"
+            "CBNL/cloud-nms-agent"
           )
 
           FROM_TAGS=(
