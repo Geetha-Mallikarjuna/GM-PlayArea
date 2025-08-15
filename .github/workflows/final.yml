@@ -110,7 +110,12 @@ jobs:
       - name: Combine all changelogs into one summary file
         run: |
           {
-            cat changelogs/changelog-*.txt
+            for file in changelogs/changelog-*.txt; do
+              echo ""
+              cat "$file"
+              echo ""
+            done
+
             echo ""
             cat changelogs/packages-info.txt
           } > changelogs/changelogs-summary.txt
