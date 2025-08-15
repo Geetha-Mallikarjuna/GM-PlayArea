@@ -1,4 +1,4 @@
-name: Gitlog_final
+name: Gitlog Final
 
 on:
   workflow_dispatch:
@@ -25,11 +25,11 @@ on:
         required: true
 
       new_tag:
-        description: 'New tag to apply at the same commit as To tag (e.g., Customer-Release-1.0)'
+        description: 'New tag to apply at the same commit as To tag'
         required: true
 
 jobs:
-  changelog-only:
+  changelog:
     runs-on: ubuntu-latest
 
     env:
@@ -39,13 +39,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install git, pandoc, and Python dependencies
+      - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
-      - name: Generate changelogs (commit messages only)
+      - name: Generate changelogs
         run: |
           mkdir -p changelogs
 
@@ -81,7 +81,6 @@ jobs:
             cd "$REPO_DIR"
             git fetch --tags
 
-            LOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
             COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
 
             if [[ -n "$COMMIT" ]]; then
@@ -92,37 +91,38 @@ jobs:
               fi
             fi
 
+            FILE_MD="../changelogs/changelog-${REPO//\//_}.md"
+            {
+              echo "🔖 $REPO: $FROM → $TO"
+              echo ""
+              git log "$FROM".."$TO" --pretty=format:"- %s"
+              echo ""
+            } > "$FILE_MD"
+
             cd ..
             rm -rf "$REPO_DIR"
-
-            if [[ -n "$LOG" ]]; then
-              FILE_MD="changelogs/changelog-${REPO//\//_}.txt"
-              {
-                echo "🔖 $REPO: $FROM → $TO"
-                echo "$LOG"
-              } > "$FILE_MD"
-            fi
           done
 
       - name: Run Python script to extract package info
-        run: python3 parse_yaml.py
+        run: |
+          python3 .github/scripts/parse_yaml.py
 
-      - name: Combine all changelogs into one summary file
+      - name: Combine changelogs and package summary
         run: |
           {
-            for file in changelogs/changelog-*.txt; do
-              echo ""                # Ensure paragraph break
+            for file in changelogs/changelog-*.md; do
               cat "$file"
-              echo ""                # Another newline ensures block separation
+              echo ""
             done
 
-            echo ""                  # Spacer before the table
+            echo ""
             cat changelogs/packages-info.txt
           } > changelogs/changelogs-summary.md
 
-      - name: Convert final changelog summary to HTML
+      - name: Convert summary to HTML
         run: |
           pandoc changelogs/changelogs-summary.md -f markdown -t html -o changelogs/changelogs-summary.html
+          echo "✅ HTML summary created at changelogs/changelogs-summary.html"
 
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
