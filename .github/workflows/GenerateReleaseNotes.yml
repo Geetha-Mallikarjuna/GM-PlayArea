@@ -103,7 +103,7 @@ jobs:
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
               if ! git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
                 git tag "$NEW_TAG" "$COMMIT"
-                git push origin "$NEW_TAG"
+                
               fi
             fi
 
