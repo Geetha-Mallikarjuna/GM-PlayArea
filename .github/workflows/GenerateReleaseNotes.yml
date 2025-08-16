@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+      GH_TOKEN: ${{ secrets.CBNG_PAT }}
 
     steps:
       # ----------------------------------------
