@@ -36,20 +36,30 @@ jobs:
       GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
+      # ----------------------------------------
+      # Step 1: Checkout this repository
+      # ----------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ----------------------------------------
+      # Step 2: Install required dependencies
+      # ----------------------------------------
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
+      # ----------------------------------------
+      # Step 3: Generate changelogs for all repos
+      # ----------------------------------------
       - name: Generate changelogs
         run: |
           echo "📄 Creating changelog directory..."
           mkdir -p changelogs
 
+          # Define the list of repositories and corresponding tags
           REPOS=(
             "Geetha-Mallikarjuna/GM-PlayArea"
             "Geetha-Mallikarjuna/GM-PlayArea-2"
@@ -85,25 +95,30 @@ jobs:
             echo "🔍 Fetching tags..."
             git fetch --tags
 
+            # Get commit hash for the target tag
             COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
+
             if [[ -n "$COMMIT" ]]; then
-              echo "🏷️ Tagging $COMMIT with $NEW_TAG (if not exists)"
+              echo "🏷️ Tagging $COMMIT with $NEW_TAG (if not already exists)"
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
               if ! git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
                 git tag "$NEW_TAG" "$COMMIT"
               fi
             fi
 
+            # Generate markdown changelog for this repo
             FILE_MD="../changelogs/changelog-${REPO//\//_}.md"
             {
               echo "**🔖 $REPO: $FROM → $TO**"
               echo ""
+
               CHANGELOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
               if [[ -n "$CHANGELOG" ]]; then
                 echo "$CHANGELOG"
               else
                 echo "- There are no changes"
               fi
+
               echo ""
             } > "$FILE_MD"
 
@@ -111,24 +126,36 @@ jobs:
             rm -rf "$REPO_DIR"
           done
 
+      # ----------------------------------------
+      # Step 4: Run Python script for package info
+      # ----------------------------------------
       - name: Run Python script to extract package info
         run: |
           echo "📦 Extracting package info using Python..."
           python3 parse_required_files.py
 
+      # ----------------------------------------
+      # Step 5: Combine changelogs and package summary
+      # ----------------------------------------
       - name: Combine changelogs and package summary
         run: |
           echo "📘 Combining changelogs into summary markdown..."
           {
             echo "# Change List" > changelogs/changelogs-summary.md
+
+            # Append each individual changelog
             for file in changelogs/changelog-*.md; do
               cat "$file"
               echo ""
             done
+
             echo ""
             cat changelogs/packages-info.txt
           } >> changelogs/changelogs-summary.md
 
+      # ----------------------------------------
+      # Step 6: Convert changelog summary to HTML
+      # ----------------------------------------
       - name: Convert summary to HTML
         run: |
           echo "🌐 Converting markdown summary to HTML..."
@@ -147,6 +174,9 @@ EOF
 
           echo "✅ HTML summary created at changelogs/changelogs-summary.html"
 
+      # ----------------------------------------
+      # Step 7: Upload changelogs as GitHub artifact
+      # ----------------------------------------
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
