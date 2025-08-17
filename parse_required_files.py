@@ -57,7 +57,7 @@ def main():
     """
     Main function to parse input.yaml and generate package summary.
     """
-    input_file = 'input.yaml'
+    input_file = 'CI_create_package/required_files.yaml'
     output_file = 'changelogs/packages-info.txt'
 
     # Load YAML data
