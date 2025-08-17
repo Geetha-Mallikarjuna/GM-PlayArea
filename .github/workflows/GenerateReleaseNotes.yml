@@ -133,7 +133,6 @@ jobs:
         run: |
           echo "🌐 Converting markdown summary to HTML..."
 
-          # Create CSS: center only h1, left-align rest
           cat << EOF > changelogs/header.css
 body { text-align: left !important; }
 h1 { text-align: center !important; }
