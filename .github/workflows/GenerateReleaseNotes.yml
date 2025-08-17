@@ -162,7 +162,8 @@ jobs:
           echo "🌐 Converting markdown summary to HTML..."
           pandoc changelogs/changelogs-summary.md \
             --metadata title="Release Notes" \
-            -f markdown -t html -o changelogs/changelogs-summary.html
+            -f markdown -t html -s \
+            -o changelogs/changelogs-summary.html
           echo "✅ HTML summary created at changelogs/changelogs-summary.html"
 
       # ----------------------------------------
