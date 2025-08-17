@@ -36,15 +36,24 @@ jobs:
       GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
+      # ----------------------------------------
+      # Step 1: Checkout this repository
+      # ----------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ----------------------------------------
+      # Step 2: Install required dependencies
+      # ----------------------------------------
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
+      # ----------------------------------------
+      # Step 3: Generate changelogs for all repos
+      # ----------------------------------------
       - name: Generate changelogs
         run: |
           echo "📄 Creating changelog directory..."
@@ -114,11 +123,17 @@ jobs:
             rm -rf "$REPO_DIR"
           done
 
+      # ----------------------------------------
+      # Step 4: Run Python script for package info
+      # ----------------------------------------
       - name: Run Python script to extract package info
         run: |
           echo "📦 Extracting package info using Python..."
           python3 parse_required_files.py
 
+      # ----------------------------------------
+      # Step 5: Combine changelogs and package summary
+      # ----------------------------------------
       - name: Combine changelogs and package summary
         run: |
           echo "📘 Combining changelogs into summary markdown..."
@@ -135,6 +150,9 @@ jobs:
             cat changelogs/packages-info.txt
           } > changelogs/changelogs-summary.md
 
+      # ----------------------------------------
+      # Step 6: Convert changelog summary to HTML
+      # ----------------------------------------
       - name: Convert summary to HTML
         run: |
           echo "<style>
@@ -156,6 +174,9 @@ jobs:
 
           echo "✅ HTML summary created at changelogs/changelogs-summary.html"
 
+      # ----------------------------------------
+      # Step 7: Upload changelogs as GitHub artifact
+      # ----------------------------------------
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
