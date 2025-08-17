@@ -36,48 +36,38 @@ jobs:
       GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
-      # ----------------------------------------
-      # Step 1: Checkout this repository
-      # ----------------------------------------
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ----------------------------------------
-      # Step 2: Install required dependencies
-      # ----------------------------------------
+      # Step 2: Install dependencies
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
-      # ----------------------------------------
-      # Step 3: Generate changelogs for all repos
-      # ----------------------------------------
+      # Step 3: Generate changelogs
       - name: Generate changelogs
         run: |
           echo "📄 Creating changelog directory..."
           mkdir -p changelogs
 
-          # Define the list of repositories and corresponding tags
           REPOS=(
             "Geetha-Mallikarjuna/GM-PlayArea"
             "Geetha-Mallikarjuna/GM-PlayArea-2"
             "Geetha-Mallikarjuna/GM-PlayArea-3"
           )
-
           FROM_TAGS=(
             "${{ inputs.from_tag_1 }}"
             "${{ inputs.from_tag_2 }}"
             "${{ inputs.from_tag_3 }}"
           )
-
           TO_TAGS=(
             "${{ inputs.to_tag_1 }}"
             "${{ inputs.to_tag_2 }}"
             "${{ inputs.to_tag_3 }}"
           )
-
           NEW_TAG="${{ inputs.new_tag }}"
 
           echo "🚀 Starting changelog generation loop..."
@@ -95,31 +85,25 @@ jobs:
             echo "🔍 Fetching tags..."
             git fetch --tags
 
-            # Get commit hash for the target tag
             COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
-
             if [[ -n "$COMMIT" ]]; then
-              echo "🏷️ Tagging $COMMIT with $NEW_TAG (if not already exists)"
+              echo "🏷️ Tagging $COMMIT with $NEW_TAG (if not exists)"
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
               if ! git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
                 git tag "$NEW_TAG" "$COMMIT"
               fi
             fi
 
-            # Generate markdown changelog for this repo
             FILE_MD="../changelogs/changelog-${REPO//\//_}.md"
             {
               echo "**🔖 $REPO: $FROM → $TO**"
               echo ""
-
-              # Check if there are changes between tags
               CHANGELOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
               if [[ -n "$CHANGELOG" ]]; then
                 echo "$CHANGELOG"
               else
                 echo "- There are no changes"
               fi
-
               echo ""
             } > "$FILE_MD"
 
@@ -127,58 +111,47 @@ jobs:
             rm -rf "$REPO_DIR"
           done
 
-      # ----------------------------------------
-      # Step 4: Run Python script for package info
-      # ----------------------------------------
+      # Step 4: Extract package info
       - name: Run Python script to extract package info
         run: |
           echo "📦 Extracting package info using Python..."
           python3 parse_required_files.py
 
-      # ----------------------------------------
       # Step 5: Combine changelogs and package summary
-      # ----------------------------------------
       - name: Combine changelogs and package summary
         run: |
           echo "📘 Combining changelogs into summary markdown..."
           {
             echo "# Change List" > changelogs/changelogs-summary.md
-
-            # Append each individual changelog
             for file in changelogs/changelog-*.md; do
               cat "$file"
               echo ""
             done
-
             echo ""
             cat changelogs/packages-info.txt
           } >> changelogs/changelogs-summary.md
 
-      # ----------------------------------------
-      # Step 6: Convert changelog summary to HTML
-      # ----------------------------------------
+      # Step 6: Convert summary to HTML with title-only centering
       - name: Convert summary to HTML
         run: |
           echo "🌐 Converting markdown summary to HTML..."
 
-          # Add CSS to center title and left-align rest
-          echo '<style>
-          body { text-align: left; }
-          h1 { text-align: center; }
-          </style>' > changelogs/header.html
+          # Create CSS to override default: center only h1, rest left-aligned
+          cat << 'EOF' > changelogs/header.css
+  body { text-align: left !important; }
+  h1 { text-align: center !important; }
+EOF
 
           pandoc changelogs/changelogs-summary.md \
             --standalone \
             --metadata title="Release Notes" \
-            -H changelogs/header.html \
+            --css changelogs/header.css \
             -f markdown -t html \
             -o changelogs/changelogs-summary.html
 
           echo "✅ HTML summary created at changelogs/changelogs-summary.html"
 
-      # ----------------------------------------
-      # Step 7: Upload changelogs as GitHub artifact
-      # ----------------------------------------
+      # Step 7: Upload as artifact
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
