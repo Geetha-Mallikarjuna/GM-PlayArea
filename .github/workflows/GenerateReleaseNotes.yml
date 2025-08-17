@@ -123,4 +123,41 @@ jobs:
         run: |
           echo "📘 Combining changelogs into summary markdown..."
           {
-            ec
+            echo "# Release Notes"
+            echo ""
+
+            for file in changelogs/changelog-*.md; do
+              cat "$file"
+              echo ""
+            done
+
+            echo ""
+            cat changelogs/packages-info.txt
+          } > changelogs/changelogs-summary.md
+
+      - name: Convert summary to HTML
+        run: |
+          echo "<style>
+          h1 {
+            text-align: center;
+            margin-top: 1em;
+            margin-bottom: 1em;
+          }
+          body, p, ul, li, div {
+            text-align: left !important;
+          }
+          </style>" > changelogs/header.html
+
+          pandoc changelogs/changelogs-summary.md \
+            --standalone \
+            --include-in-header changelogs/header.html \
+            -f markdown -t html \
+            -o changelogs/changelogs-summary.html
+
+          echo "✅ HTML summary created at changelogs/changelogs-summary.html"
+
+      - name: Upload changelogs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelogs
+          path: changelogs/changelogs-summary.html
