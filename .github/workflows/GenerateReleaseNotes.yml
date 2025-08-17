@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GH_TOKEN: ${{ secrets.CBNG_PAT }}
+      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
       # ----------------------------------------
@@ -61,9 +61,9 @@ jobs:
 
           # Define the list of repositories and corresponding tags
           REPOS=(
-            "CBNL/Embedded_utilities"
-            "CBNL/ap-startup"
-            "CBNL/cloud-nms-agent"
+            "Geetha-Mallikarjuna/GM-PlayArea"
+            "Geetha-Mallikarjuna/GM-PlayArea-2"
+            "Geetha-Mallikarjuna/GM-PlayArea-3"
           )
 
           FROM_TAGS=(
