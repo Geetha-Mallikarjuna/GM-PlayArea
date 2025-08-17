@@ -160,9 +160,12 @@ jobs:
       - name: Convert summary to HTML
         run: |
           echo "🌐 Converting markdown summary to HTML..."
+          echo '<style>h1 { text-align: center; }</style>' > changelogs/header.html
           pandoc changelogs/changelogs-summary.md \
             --metadata title="Release Notes" \
-            -f markdown -t html -s \
+            --standalone \
+            -f markdown -t html \
+            -H changelogs/header.html \
             -o changelogs/changelogs-summary.html
           echo "✅ HTML summary created at changelogs/changelogs-summary.html"
 
