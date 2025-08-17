@@ -36,30 +36,20 @@ jobs:
       GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
-      # ----------------------------------------
-      # Step 1: Checkout this repository
-      # ----------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ----------------------------------------
-      # Step 2: Install required dependencies
-      # ----------------------------------------
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
-      # ----------------------------------------
-      # Step 3: Generate changelogs for all repos
-      # ----------------------------------------
       - name: Generate changelogs
         run: |
           echo "📄 Creating changelog directory..."
           mkdir -p changelogs
 
-          # Define the list of repositories and corresponding tags
           REPOS=(
             "Geetha-Mallikarjuna/GM-PlayArea"
             "Geetha-Mallikarjuna/GM-PlayArea-2"
@@ -95,7 +85,6 @@ jobs:
             echo "🔍 Fetching tags..."
             git fetch --tags
 
-            # Get commit hash for the target tag
             COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
 
             if [[ -n "$COMMIT" ]]; then
@@ -106,7 +95,6 @@ jobs:
               fi
             fi
 
-            # Generate markdown changelog for this repo
             FILE_MD="../changelogs/changelog-${REPO//\//_}.md"
             {
               echo "**🔖 $REPO: $FROM → $TO**"
@@ -126,24 +114,17 @@ jobs:
             rm -rf "$REPO_DIR"
           done
 
-      # ----------------------------------------
-      # Step 4: Run Python script for package info
-      # ----------------------------------------
       - name: Run Python script to extract package info
         run: |
           echo "📦 Extracting package info using Python..."
           python3 parse_required_files.py
 
-      # ----------------------------------------
-      # Step 5: Combine changelogs and package summary
-      # ----------------------------------------
       - name: Combine changelogs and package summary
         run: |
           echo "📘 Combining changelogs into summary markdown..."
           {
             echo "# Change List" > changelogs/changelogs-summary.md
 
-            # Append each individual changelog
             for file in changelogs/changelog-*.md; do
               cat "$file"
               echo ""
@@ -153,17 +134,10 @@ jobs:
             cat changelogs/packages-info.txt
           } >> changelogs/changelogs-summary.md
 
-      # ----------------------------------------
-      # Step 6: Convert changelog summary to HTML
-      # ----------------------------------------
       - name: Convert summary to HTML
         run: |
-          echo "🌐 Converting markdown summary to HTML..."
-
-          cat << EOF > changelogs/header.css
-body { text-align: left !important; }
-h1 { text-align: center !important; }
-EOF
+          echo "body { text-align: left !important; }" > changelogs/header.css
+          echo "h1 { text-align: center !important; }" >> changelogs/header.css
 
           pandoc changelogs/changelogs-summary.md \
             --standalone \
@@ -174,9 +148,6 @@ EOF
 
           echo "✅ HTML summary created at changelogs/changelogs-summary.html"
 
-      # ----------------------------------------
-      # Step 7: Upload changelogs as GitHub artifact
-      # ----------------------------------------
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
