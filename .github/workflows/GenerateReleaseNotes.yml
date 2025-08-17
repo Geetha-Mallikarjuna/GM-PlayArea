@@ -103,7 +103,6 @@ jobs:
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
               if ! git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
                 git tag "$NEW_TAG" "$COMMIT"
-                
               fi
             fi
 
@@ -112,7 +111,15 @@ jobs:
             {
               echo "**🔖 $REPO: $FROM → $TO**"
               echo ""
-              git log "$FROM".."$TO" --pretty=format:"- %s"
+
+              # Check if there are changes between tags
+              CHANGELOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
+              if [[ -n "$CHANGELOG" ]]; then
+                echo "$CHANGELOG"
+              else
+                echo "**There are no changes**"
+              fi
+
               echo ""
             } > "$FILE_MD"
 
