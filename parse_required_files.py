@@ -33,7 +33,7 @@ def write_package_summary(require_files, output_path):
     """
     with open(output_path, 'w') as out:
         # Write header
-        out.write('# 📦 Package Summary from input.yaml\n\n')
+        out.write('# 📦 Package Summary from required_files.yaml\n\n')
 
         # Begin HTML table
         out.write('<table border="1" cellpadding="5" cellspacing="0">\n')
@@ -55,7 +55,7 @@ def write_package_summary(require_files, output_path):
 
 def main():
     """
-    Main function to parse input.yaml and generate package summary.
+    Main function to parse required_files.yaml and generate package summary.
     """
     input_file = 'CI_create_package/required_files.yaml'
     output_file = 'changelogs/packages-info.txt'
@@ -79,4 +79,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
