@@ -36,18 +36,15 @@ jobs:
       GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
-      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Install dependencies
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
-      # Step 3: Generate changelogs
       - name: Generate changelogs
         run: |
           echo "📄 Creating changelog directory..."
@@ -114,13 +111,11 @@ jobs:
             rm -rf "$REPO_DIR"
           done
 
-      # Step 4: Extract package info
       - name: Run Python script to extract package info
         run: |
           echo "📦 Extracting package info using Python..."
           python3 parse_required_files.py
 
-      # Step 5: Combine changelogs and package summary
       - name: Combine changelogs and package summary
         run: |
           echo "📘 Combining changelogs into summary markdown..."
@@ -134,13 +129,12 @@ jobs:
             cat changelogs/packages-info.txt
           } >> changelogs/changelogs-summary.md
 
-      # Step 6: Convert summary to HTML with title-only centering CSS
       - name: Convert summary to HTML
         run: |
           echo "🌐 Converting markdown summary to HTML..."
 
           # Create CSS: center only h1, left-align rest
-          cat << 'EOF' > changelogs/header.css
+          cat << EOF > changelogs/header.css
 body { text-align: left !important; }
 h1 { text-align: center !important; }
 EOF
@@ -154,7 +148,6 @@ EOF
 
           echo "✅ HTML summary created at changelogs/changelogs-summary.html"
 
-      # Step 7: Upload as artifact
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
