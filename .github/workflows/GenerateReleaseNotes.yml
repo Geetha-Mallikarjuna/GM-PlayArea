@@ -140,10 +140,9 @@ jobs:
           echo "body { text-align: left !important; }" > changelogs/header.css
           echo "h1 { text-align: center !important; margin-top: 1em; margin-bottom: 1em; }" >> changelogs/header.css
 
-          # Generate standalone HTML with title metadata and CSS
+          # Convert markdown to standalone HTML with CSS WITHOUT --metadata title to avoid duplicated heading
           pandoc changelogs/changelogs-summary.md \
             --standalone \
-            --metadata title="Release Notes" \
             --css changelogs/header.css \
             -f markdown -t html \
             -o changelogs/changelogs-summary.html
