@@ -33,7 +33,7 @@ def write_package_summary(require_files, output_path):
     """
     with open(output_path, 'w') as out:
         # Write header
-        out.write('# 📦 Package Summary from required_files.yaml\n\n')
+        # out.write('# 📦 Package Summary from required_files.yaml\n\n')
 
         # Begin HTML table
         out.write('<table border="1" cellpadding="5" cellspacing="0">\n')
