@@ -36,18 +36,15 @@ jobs:
       GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
-      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Install dependencies
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
-      # Step 3: Generate changelogs
       - name: Generate changelogs
         run: |
           mkdir -p changelogs
@@ -94,14 +91,12 @@ jobs:
             {
               echo "**🔖 $REPO: $FROM → $TO**"
               echo ""
-
               CHANGELOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
               if [[ -n "$CHANGELOG" ]]; then
                 echo "$CHANGELOG"
               else
                 echo "- There are no changes"
               fi
-
               echo ""
             } > "$FILE_MD"
 
@@ -109,12 +104,10 @@ jobs:
             rm -rf "$REPO_DIR"
           done
 
-      # Step 4: Extract package info
       - name: Run Python script to extract package info
         run: |
           python3 parse_required_files.py
 
-      # Step 5: Combine changelogs and package summary
       - name: Combine changelogs and package summary
         run: |
           {
@@ -122,64 +115,53 @@ jobs:
             echo ""
             echo "## Change List"
             echo ""
-
             for file in changelogs/changelog-*.md; do
               cat "$file"
               echo ""
             done
-
             echo "## Package Summary"
             echo ""
             cat changelogs/packages-info.txt
           } > changelogs/changelogs-summary.md
 
-      # Step 6: Convert to styled HTML (title centered, rest left-aligned)
       - name: Convert markdown summary to HTML
         run: |
-          cat << 'EOF' > changelogs/header.html
-          <style>
-            body {
-              margin: 0;
-              padding: 2em;
-              font-family: Arial, sans-serif;
-              text-align: left;
-            }
-
-            h1 {
-              text-align: center;
-              font-size: 2.5em;
-              margin-bottom: 0.5em;
-            }
-
-            h2 {
-              text-align: left;
-              font-size: 1.5em;
-              color: #333;
-              margin-top: 2em;
-            }
-
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 1em;
-              margin-bottom: 1em;
-            }
-
-            th, td {
-              border: 1px solid #999;
-              padding: 0.5em;
-              text-align: left;
-            }
-
-            ul {
-              padding-left: 1.5em;
-            }
-
-            li {
-              margin-bottom: 0.3em;
-            }
-          </style>
-EOF
+          echo '<style>
+          body {
+            margin: 0;
+            padding: 2em;
+            font-family: Arial, sans-serif;
+            text-align: left;
+          }
+          h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 0.5em;
+          }
+          h2 {
+            text-align: left;
+            font-size: 1.5em;
+            color: #333;
+            margin-top: 2em;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1em;
+            margin-bottom: 1em;
+          }
+          th, td {
+            border: 1px solid #999;
+            padding: 0.5em;
+            text-align: left;
+          }
+          ul {
+            padding-left: 1.5em;
+          }
+          li {
+            margin-bottom: 0.3em;
+          }
+          </style>' > changelogs/header.html
 
           pandoc changelogs/changelogs-summary.md \
             --standalone \
@@ -187,7 +169,6 @@ EOF
             -f markdown -t html \
             -o changelogs/changelogs-summary.html
 
-      # Step 7: Upload the HTML as an artifact
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
