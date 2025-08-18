@@ -40,14 +40,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Install dependencies
+      # Step 2: Install required dependencies
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
-      # Step 3: Generate changelogs
+      # Step 3: Generate changelogs for all repos
       - name: Generate changelogs
         run: |
           mkdir -p changelogs
@@ -114,7 +114,7 @@ jobs:
         run: |
           python3 parse_required_files.py
 
-      # Step 5: Combine changelogs and package summary
+      # Step 5: Combine changelogs and package summary into a single markdown file
       - name: Combine changelogs and package summary
         run: |
           {
@@ -133,36 +133,33 @@ jobs:
             cat changelogs/packages-info.txt
           } > changelogs/changelogs-summary.md
 
-      # Step 6: Convert changelog summary to HTML with proper layout
-      - name: Convert summary to HTML
-        shell: bash
+      # Step 6: Convert summary to HTML with only the title centered
+      - name: Convert markdown summary to HTML
         run: |
-          cat << 'EOF' > changelogs/header.html
-<style>
-  body {
-    max-width: 100%;
-    margin: 0;
-    padding: 2em;
-    font-family: Arial, sans-serif;
-    text-align: left !important;
-  }
-  h1 {
-    text-align: center;
-    font-size: 2.5em;
-    margin-top: 1em;
-    margin-bottom: 1em;
-  }
-  h2 {
-    text-align: left;
-    font-size: 1.5em;
-    margin-top: 2em;
-    color: #333;
-  }
-  ul, li, p, div {
-    text-align: left !important;
-  }
-</style>
-EOF
+          echo '<style>
+          body {
+            max-width: 100%;
+            margin: 0;
+            padding: 2em;
+            font-family: Arial, sans-serif;
+            text-align: left;
+          }
+          h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-top: 1em;
+            margin-bottom: 1em;
+          }
+          h2 {
+            text-align: left;
+            font-size: 1.5em;
+            margin-top: 2em;
+            color: #333;
+          }
+          ul, li, p, div {
+            text-align: left;
+          }
+          </style>' > changelogs/header.html
 
           pandoc changelogs/changelogs-summary.md \
             --standalone \
@@ -170,7 +167,7 @@ EOF
             -f markdown -t html \
             -o changelogs/changelogs-summary.html
 
-      # Step 7: Upload changelogs as GitHub artifact
+      # Step 7: Upload changelog HTML as an artifact
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
