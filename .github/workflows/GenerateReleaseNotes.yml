@@ -36,18 +36,18 @@ jobs:
       GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
-      # Step 1: Checkout the repo
+      # Step 1: Checkout this repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Install tools
+      # Step 2: Install dependencies
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
-      # Step 3: Generate changelogs for each repo
+      # Step 3: Generate changelogs
       - name: Generate changelogs
         run: |
           mkdir -p changelogs
@@ -83,7 +83,6 @@ jobs:
             git fetch --tags
 
             COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
-
             if [[ -n "$COMMIT" ]]; then
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
               if ! git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
@@ -95,12 +94,14 @@ jobs:
             {
               echo "**🔖 $REPO: $FROM → $TO**"
               echo ""
+
               CHANGELOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
               if [[ -n "$CHANGELOG" ]]; then
                 echo "$CHANGELOG"
               else
                 echo "- There are no changes"
               fi
+
               echo ""
             } > "$FILE_MD"
 
@@ -108,12 +109,12 @@ jobs:
             rm -rf "$REPO_DIR"
           done
 
-      # Step 4: Run custom Python script
-      - name: Extract package info
+      # Step 4: Run Python script to extract package info
+      - name: Run Python script to extract package info
         run: |
           python3 parse_required_files.py
 
-      # Step 5: Combine changelogs into markdown summary
+      # Step 5: Combine changelogs and package summary
       - name: Combine changelogs and package summary
         run: |
           {
@@ -132,12 +133,11 @@ jobs:
             cat changelogs/packages-info.txt
           } > changelogs/changelogs-summary.md
 
-      # Step 6: Convert markdown to HTML (center title, left-align rest, full-width)
-      - name: Convert to HTML with styling
+      # Step 6: Convert changelog summary to HTML with proper layout
+      - name: Convert summary to HTML
         shell: bash
         run: |
-          echo 'Creating custom CSS...'
-          cat > changelogs/header.html << 'EOF'
+          cat << 'EOF' > changelogs/header.html
 <style>
   body {
     max-width: 100%;
@@ -164,15 +164,14 @@ jobs:
 </style>
 EOF
 
-          echo 'Generating HTML with pandoc...'
           pandoc changelogs/changelogs-summary.md \
             --standalone \
             --include-in-header=changelogs/header.html \
             -f markdown -t html \
             -o changelogs/changelogs-summary.html
 
-      # Step 7: Upload the result
-      - name: Upload HTML artifact
+      # Step 7: Upload changelogs as GitHub artifact
+      - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
           name: changelogs
