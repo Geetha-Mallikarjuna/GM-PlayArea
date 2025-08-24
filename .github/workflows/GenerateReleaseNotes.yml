@@ -164,7 +164,6 @@ jobs:
             padding: 0.5em;
             text-align: left;
             vertical-align: top;
-            overflow-wrap: anywhere;
           }
           th:nth-child(1), td:nth-child(1) {
             width: 15%;
@@ -174,6 +173,9 @@ jobs:
           }
           th:nth-child(3), td:nth-child(3) {
             width: 70%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
           ul {
             padding-left: 1.5em;
