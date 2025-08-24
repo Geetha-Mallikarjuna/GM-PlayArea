@@ -122,7 +122,10 @@ jobs:
             done
             echo "## Package Summary"
             echo ""
+            # Wrap package summary table in scrollable div
+            echo '<div class="table-wrapper">'
             cat changelogs/packages-info.txt
+            echo '</div>'
             echo "</div>"
           } > changelogs/changelogs-summary.md
 
@@ -133,7 +136,6 @@ jobs:
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100%;
             font-family: Arial, sans-serif;
           }
           .container {
@@ -152,30 +154,24 @@ jobs:
             margin-top: 2em;
             color: #333;
           }
-          table {
+          .table-wrapper {
+            overflow-x: auto;  /* Scrollbar only if needed */
             width: 100%;
-            table-layout: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          table {
+            width: 100%;         /* Full width table */
             border-collapse: collapse;
             margin-top: 1em;
             margin-bottom: 2em;
+            table-layout: auto;  /* Auto column sizing */
           }
           th, td {
             border: 1px solid #999;
             padding: 0.5em;
             text-align: left;
             vertical-align: top;
-          }
-          th:nth-child(1), td:nth-child(1) {
-            width: 15%;
-          }
-          th:nth-child(2), td:nth-child(2) {
-            width: 15%;
-          }
-          th:nth-child(3), td:nth-child(3) {
-            width: 70%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: nowrap; /* No line wrap */
           }
           ul {
             padding-left: 1.5em;
