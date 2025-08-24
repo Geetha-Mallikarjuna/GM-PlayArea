@@ -40,14 +40,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Install required dependencies
+      # Step 2: Install dependencies
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
-      # Step 3: Generate changelogs for all repos
+      # Step 3: Generate changelogs for all repositories
       - name: Generate changelogs
         run: |
           mkdir -p changelogs
@@ -94,14 +94,12 @@ jobs:
             {
               echo "**🔖 $REPO: $FROM → $TO**"
               echo ""
-
               CHANGELOG=$(git log "$FROM".."$TO" --pretty=format:"- %s")
               if [[ -n "$CHANGELOG" ]]; then
                 echo "$CHANGELOG"
               else
                 echo "- There are no changes"
               fi
-
               echo ""
             } > "$FILE_MD"
 
@@ -109,65 +107,78 @@ jobs:
             rm -rf "$REPO_DIR"
           done
 
-      # Step 4: Run Python script to extract package info
+      # Step 4: Extract package info
       - name: Run Python script to extract package info
         run: |
           python3 parse_required_files.py
 
-      # Step 5: Combine changelogs and package summary into a single markdown file
+      # Step 5: Combine changelogs and package summary into one Markdown file
       - name: Combine changelogs and package summary
         run: |
           {
-            echo "# Release Notes"
+            echo '<div class="title">Release Notes</div>'
             echo ""
             echo "## Change List"
             echo ""
-
             for file in changelogs/changelog-*.md; do
               cat "$file"
               echo ""
             done
-
             echo "## Package Summary"
             echo ""
             cat changelogs/packages-info.txt
           } > changelogs/changelogs-summary.md
 
-      # Step 6: Convert summary to HTML with only the title centered
-      - name: Convert markdown summary to HTML
+      # Step 6: Add custom styling for HTML
+      - name: Generate custom CSS header
         run: |
           echo '<style>
           body {
-            max-width: 100%;
             margin: 0;
             padding: 2em;
             font-family: Arial, sans-serif;
-            text-align: left;
           }
-          h1 {
+          .title {
             text-align: center;
             font-size: 2.5em;
-            margin-top: 1em;
+            font-weight: bold;
             margin-bottom: 1em;
           }
           h2 {
             text-align: left;
             font-size: 1.5em;
-            margin-top: 2em;
             color: #333;
+            margin-top: 2em;
           }
-          ul, li, p, div {
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1em;
+            margin-bottom: 2em;
+          }
+          th, td {
+            border: 1px solid #999;
+            padding: 0.5em;
             text-align: left;
+          }
+          ul {
+            padding-left: 1.5em;
+          }
+          li {
+            margin-bottom: 0.3em;
           }
           </style>' > changelogs/header.html
 
+      # Step 7: Convert Markdown summary to HTML
+      - name: Convert markdown to HTML
+        run: |
           pandoc changelogs/changelogs-summary.md \
             --standalone \
             --include-in-header=changelogs/header.html \
             -f markdown -t html \
             -o changelogs/changelogs-summary.html
 
-      # Step 7: Upload changelog HTML as an artifact
+      # Step 8: Upload changelog HTML as GitHub artifact
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
