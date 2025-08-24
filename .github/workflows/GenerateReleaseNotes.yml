@@ -129,7 +129,7 @@ jobs:
             cat changelogs/packages-info.txt
           } > changelogs/changelogs-summary.md
 
-      # Step 6: Add custom styling for HTML
+      # ✅ Step 6: Updated CSS for full-width table
       - name: Generate custom CSS header
         run: |
           echo '<style>
@@ -137,6 +137,8 @@ jobs:
             margin: 0;
             padding: 2em;
             font-family: Arial, sans-serif;
+            box-sizing: border-box;
+            width: 100%;
           }
           .title {
             text-align: center;
@@ -151,15 +153,17 @@ jobs:
             margin-top: 2em;
           }
           table {
-            width: 100%;
+            width: 100% !important;
             border-collapse: collapse;
             margin-top: 1em;
             margin-bottom: 2em;
+            table-layout: fixed;
           }
           th, td {
             border: 1px solid #999;
             padding: 0.5em;
             text-align: left;
+            word-wrap: break-word;
           }
           ul {
             padding-left: 1.5em;
