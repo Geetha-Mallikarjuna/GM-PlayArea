@@ -154,7 +154,7 @@ jobs:
           }
           table {
             width: 100%;
-            table-layout: fixed;
+            table-layout: auto;
             border-collapse: collapse;
             margin-top: 1em;
             margin-bottom: 2em;
@@ -164,8 +164,16 @@ jobs:
             padding: 0.5em;
             text-align: left;
             vertical-align: top;
-            word-break: break-word;
-            white-space: normal;
+            overflow-wrap: anywhere;
+          }
+          th:nth-child(1), td:nth-child(1) {
+            width: 15%;
+          }
+          th:nth-child(2), td:nth-child(2) {
+            width: 15%;
+          }
+          th:nth-child(3), td:nth-child(3) {
+            width: 70%;
           }
           ul {
             padding-left: 1.5em;
