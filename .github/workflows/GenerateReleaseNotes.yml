@@ -126,17 +126,13 @@ jobs:
             done
             echo "## Package Summary"
             echo ""
-            # Wrap package summary table inside a div wrapper for styling
-            echo '<div class="table-wrapper">'
             cat changelogs/packages-info.txt
-            echo '</div>'
           } > changelogs/changelogs-summary.md
 
       # Step 6: Add custom styling for HTML
       - name: Generate custom CSS header
         run: |
-          cat > changelogs/header.html <<'EOF'
-          <style>
+          echo '<style>
           body {
             margin: 0;
             padding: 2em;
@@ -154,27 +150,16 @@ jobs:
             color: #333;
             margin-top: 2em;
           }
-          .table-wrapper {
-            overflow-x: auto;
-            max-width: 100vw;
-          }
           table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: auto;
+            margin-top: 1em;
+            margin-bottom: 2em;
           }
           th, td {
             border: 1px solid #999;
             padding: 0.5em;
             text-align: left;
-            vertical-align: top;
-            white-space: normal;
-            word-break: break-word;
-          }
-          /* Last column nowrap to allow scrollbar only if text too long */
-          td:last-child, th:last-child {
-            white-space: nowrap;
-            min-width: 250px;
           }
           ul {
             padding-left: 1.5em;
@@ -182,8 +167,7 @@ jobs:
           li {
             margin-bottom: 0.3em;
           }
-          </style>
-          EOF
+          </style>' > changelogs/header.html
 
       # Step 7: Convert Markdown summary to HTML
       - name: Convert markdown to HTML
