@@ -64,6 +64,7 @@ jobs:
             "${{ inputs.to_tag_3 }}"
           )
           NEW_TAG="${{ inputs.new_tag }}"
+
           for i in 0 1 2; do
             REPO="${REPOS[$i]}"
             FROM="${FROM_TAGS[$i]}"
@@ -112,9 +113,7 @@ jobs:
             done
             echo "## Package Summary"
             echo ""
-            echo '<div class="table-wrapper">'
             cat changelogs/packages-info.txt
-            echo '</div>'
           } > changelogs/changelogs-summary.md
 
       - name: Generate custom CSS header
@@ -124,13 +123,16 @@ jobs:
             margin: 0;
             padding: 2em;
             font-family: Arial, sans-serif;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
           }
 
           .title {
             text-align: center;
-            font-size: 2.5em;
+            font-size: 3em;
             font-weight: bold;
-            margin-bottom: 1.5em;
+            margin: 1em auto;
           }
 
           h2 {
@@ -148,7 +150,7 @@ jobs:
           table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: auto;
+            table-layout: fixed;
           }
 
           th, td {
@@ -162,12 +164,15 @@ jobs:
           td:nth-child(1),
           th:nth-child(2),
           td:nth-child(2) {
+            width: 15%;
             white-space: nowrap;
           }
 
           th:nth-child(3),
           td:nth-child(3) {
+            width: 70%;
             white-space: normal;
+            word-wrap: break-word;
             word-break: break-word;
           }
 
