@@ -36,15 +36,18 @@ jobs:
       GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
+      # Step 1: Checkout this repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Step 2: Install dependencies
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
+      # Step 3: Generate changelogs for all repositories
       - name: Generate changelogs
         run: |
           mkdir -p changelogs
@@ -104,14 +107,15 @@ jobs:
             rm -rf "$REPO_DIR"
           done
 
+      # Step 4: Extract package info
       - name: Run Python script to extract package info
         run: |
           python3 parse_required_files.py
 
+      # Step 5: Combine changelogs and package summary into one Markdown file
       - name: Combine changelogs and package summary
         run: |
           {
-            echo '<div class="container">'
             echo '<div class="title">Release Notes</div>'
             echo ""
             echo "## Change List"
@@ -122,26 +126,21 @@ jobs:
             done
             echo "## Package Summary"
             echo ""
-            # Wrap package summary table in scrollable div
+            # Wrap package summary table inside a div wrapper for styling
             echo '<div class="table-wrapper">'
             cat changelogs/packages-info.txt
             echo '</div>'
-            echo "</div>"
           } > changelogs/changelogs-summary.md
 
+      # Step 6: Add custom styling for HTML
       - name: Generate custom CSS header
         run: |
-          echo '<style>
-          html, body {
+          cat > changelogs/header.html <<'EOF'
+          <style>
+          body {
             margin: 0;
-            padding: 0;
-            width: 100%;
-            font-family: Arial, sans-serif;
-          }
-          .container {
-            width: 100%;
             padding: 2em;
-            box-sizing: border-box;
+            font-family: Arial, sans-serif;
           }
           .title {
             text-align: center;
@@ -150,28 +149,32 @@ jobs:
             margin-bottom: 1em;
           }
           h2 {
+            text-align: left;
             font-size: 1.5em;
-            margin-top: 2em;
             color: #333;
+            margin-top: 2em;
           }
           .table-wrapper {
-            overflow-x: auto;  /* Scrollbar only if needed */
-            width: 100%;
-            -webkit-overflow-scrolling: touch;
+            overflow-x: auto;
+            max-width: 100vw;
           }
           table {
-            width: 100%;         /* Full width table */
+            width: 100%;
             border-collapse: collapse;
-            margin-top: 1em;
-            margin-bottom: 2em;
-            table-layout: auto;  /* Auto column sizing */
+            table-layout: auto;
           }
           th, td {
             border: 1px solid #999;
             padding: 0.5em;
             text-align: left;
             vertical-align: top;
-            white-space: nowrap; /* No line wrap */
+            white-space: normal;
+            word-break: break-word;
+          }
+          /* Last column nowrap to allow scrollbar only if text too long */
+          td:last-child, th:last-child {
+            white-space: nowrap;
+            min-width: 250px;
           }
           ul {
             padding-left: 1.5em;
@@ -179,8 +182,10 @@ jobs:
           li {
             margin-bottom: 0.3em;
           }
-          </style>' > changelogs/header.html
+          </style>
+          EOF
 
+      # Step 7: Convert Markdown summary to HTML
       - name: Convert markdown to HTML
         run: |
           pandoc changelogs/changelogs-summary.md \
@@ -189,6 +194,7 @@ jobs:
             -f markdown -t html \
             -o changelogs/changelogs-summary.html
 
+      # Step 8: Upload changelog HTML as GitHub artifact
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
