@@ -68,7 +68,7 @@ jobs:
             FROM="${FROM_TAGS[$i]}"
             TO="${TO_TAGS[$i]}"
             REPO_DIR=$(basename "$REPO")
-            git clone --quiet "https://github.com/$REPO.git"
+            git clone --quiet "https://${GH_TOKEN}@github.com/$REPO.git"
             cd "$REPO_DIR"
             git fetch --tags
             COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
