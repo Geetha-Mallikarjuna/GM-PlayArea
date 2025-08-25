@@ -129,52 +129,12 @@ jobs:
             cat changelogs/packages-info.txt
           } > changelogs/changelogs-summary.md
 
-      # Step 6: Add custom styling for HTML
-      - name: Generate custom CSS header
-        run: |
-          echo '<style>
-          body {
-            margin: 0;
-            padding: 2em;
-            font-family: Arial, sans-serif;
-          }
-          .title {
-            text-align: center;
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 1em;
-          }
-          h2 {
-            text-align: left;
-            font-size: 1.5em;
-            color: #333;
-            margin-top: 2em;
-          }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1em;
-            margin-bottom: 2em;
-          }
-          th, td {
-            border: 1px solid #999;
-            padding: 0.5em;
-            text-align: left;
-          }
-          ul {
-            padding-left: 1.5em;
-          }
-          li {
-            margin-bottom: 0.3em;
-          }
-          </style>' > changelogs/header.html
 
       # Step 7: Convert Markdown summary to HTML
       - name: Convert markdown to HTML
         run: |
           pandoc changelogs/changelogs-summary.md \
             --standalone \
-            --include-in-header=changelogs/header.html \
             -f markdown -t html \
             -o changelogs/changelogs-summary.html
 
