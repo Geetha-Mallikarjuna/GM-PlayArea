@@ -14,9 +14,9 @@ def load_yaml(file_path):
     with open(file_path, 'r') as f:
         return yaml.safe_load(f)
 
-def create_changelogs_directory(directory='changelogs'):
+def create_ReleaseNotes_directory(directory='ReleaseNotes'):
     """
-    Ensures the changelogs directory exists.
+    Ensures the ReleaseNotes directory exists.
 
     Args:
         directory (str): Directory name to create.
@@ -58,7 +58,7 @@ def main():
     Main function to parse required_files.yaml and generate package summary.
     """
     input_file = 'CI_create_package/required_files.yaml'
-    output_file = 'changelogs/packages-info.txt'
+    output_file = 'ReleaseNotes/packages-info.txt'
 
     # Load YAML data
     print(f"📥 Loading YAML data from '{input_file}'...")
@@ -68,8 +68,8 @@ def main():
     require_files = data.get('require_files', [])
 
     # Prepare output directory
-    print("📂 Ensuring 'changelogs' directory exists...")
-    create_changelogs_directory()
+    print("📂 Ensuring 'ReleaseNotes' directory exists...")
+    create_ReleaseNotes_directory()
 
     # Generate the HTML summary
     print(f"📝 Writing package summary to '{output_file}'...")
