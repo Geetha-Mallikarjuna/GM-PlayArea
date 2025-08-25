@@ -36,18 +36,30 @@ jobs:
       GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
     steps:
+
+      # --------------------------------------
+      # Step 1: Checkout the current repository
+      # --------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # --------------------------------------
+      # Step 2: Install system + Python dependencies
+      # --------------------------------------
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
 
+      # --------------------------------------
+      # Step 3: Generate changelogs for all specified repositories
+      # --------------------------------------
       - name: Generate changelogs
         run: |
           mkdir -p changelogs
+
+          # Repositories and tags to compare
           REPOS=(
             "Geetha-Mallikarjuna/GM-PlayArea"
             "Geetha-Mallikarjuna/GM-PlayArea-2"
@@ -65,14 +77,18 @@ jobs:
           )
           NEW_TAG="${{ inputs.new_tag }}"
 
+          # Loop through each repo and generate changelog
           for i in 0 1 2; do
             REPO="${REPOS[$i]}"
             FROM="${FROM_TAGS[$i]}"
             TO="${TO_TAGS[$i]}"
             REPO_DIR=$(basename "$REPO")
+
+            # Clone repo and tag if necessary
             git clone --quiet "https://github.com/$REPO.git"
             cd "$REPO_DIR"
             git fetch --tags
+
             COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
             if [[ -n "$COMMIT" ]]; then
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
@@ -80,6 +96,8 @@ jobs:
                 git tag "$NEW_TAG" "$COMMIT"
               fi
             fi
+
+            # Create markdown changelog file
             FILE_MD="../changelogs/changelog-${REPO//\//_}.md"
             {
               echo "**🔖 $REPO: $FROM → $TO**"
@@ -92,14 +110,21 @@ jobs:
               fi
               echo ""
             } > "$FILE_MD"
+
             cd ..
             rm -rf "$REPO_DIR"
           done
 
+      # --------------------------------------
+      # Step 4: Extract package info (summary table)
+      # --------------------------------------
       - name: Run Python script to extract package info
         run: |
           python3 parse_required_files.py
 
+      # --------------------------------------
+      # Step 5: Combine changelogs and package info into one markdown file
+      # --------------------------------------
       - name: Combine changelogs and package summary
         run: |
           {
@@ -116,6 +141,9 @@ jobs:
             cat changelogs/packages-info.txt
           } > changelogs/changelogs-summary.md
 
+      # --------------------------------------
+      # Step 6: Add custom styling to HTML output
+      # --------------------------------------
       - name: Generate custom CSS header
         run: |
           echo '<style>
@@ -128,13 +156,15 @@ jobs:
             box-sizing: border-box;
           }
 
+          /* Title styling */
           .title {
             text-align: center;
-            font-size: 3em;
+            font-size: 2em;
             font-weight: bold;
-            margin: 1em auto;
+            margin: 0.5em auto 1em auto;
           }
 
+          /* Section headers */
           h2 {
             text-align: left;
             font-size: 1.5em;
@@ -142,6 +172,7 @@ jobs:
             margin-top: 2em;
           }
 
+          /* Table formatting */
           .table-wrapper {
             width: 100%;
             overflow-x: auto;
@@ -160,6 +191,7 @@ jobs:
             vertical-align: top;
           }
 
+          /* First two columns: no wrap */
           th:nth-child(1),
           td:nth-child(1),
           th:nth-child(2),
@@ -168,6 +200,7 @@ jobs:
             white-space: nowrap;
           }
 
+          /* Last column: wrap only when needed */
           th:nth-child(3),
           td:nth-child(3) {
             width: 70%;
@@ -185,6 +218,9 @@ jobs:
           }
           </style>' > changelogs/header.html
 
+      # --------------------------------------
+      # Step 7: Convert Markdown file to styled HTML
+      # --------------------------------------
       - name: Convert markdown to HTML
         run: |
           pandoc changelogs/changelogs-summary.md \
@@ -193,6 +229,9 @@ jobs:
             -f markdown -t html \
             -o changelogs/changelogs-summary.html
 
+      # --------------------------------------
+      # Step 8: Upload HTML changelog as an artifact
+      # --------------------------------------
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
