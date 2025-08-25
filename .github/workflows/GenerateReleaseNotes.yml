@@ -44,41 +44,33 @@ jobs:
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml
-
       - name: Generate changelogs
         run: |
           mkdir -p ReleaseNotes
-
           REPOS=(
             "Geetha-Mallikarjuna/GM-PlayArea"
             "Geetha-Mallikarjuna/GM-PlayArea-2"
             "Geetha-Mallikarjuna/GM-PlayArea-3"
           )
-
           FROM_TAGS=(
             "${{ inputs.from_tag_1 }}"
             "${{ inputs.from_tag_2 }}"
             "${{ inputs.from_tag_3 }}"
           )
-
           TO_TAGS=(
             "${{ inputs.to_tag_1 }}"
             "${{ inputs.to_tag_2 }}"
             "${{ inputs.to_tag_3 }}"
           )
-
           NEW_TAG="${{ inputs.new_tag }}"
-
           for i in 0 1 2; do
             REPO="${REPOS[$i]}"
             FROM="${FROM_TAGS[$i]}"
             TO="${TO_TAGS[$i]}"
             REPO_DIR=$(basename "$REPO")
-
             git clone --quiet "https://github.com/$REPO.git"
             cd "$REPO_DIR"
             git fetch --tags
-
             COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
             if [[ -n "$COMMIT" ]]; then
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
@@ -86,7 +78,6 @@ jobs:
                 git tag "$NEW_TAG" "$COMMIT"
               fi
             fi
-
             FILE_MD="../ReleaseNotes/changelog-${REPO//\//_}.md"
             {
               echo "**🔖 $REPO: $FROM → $TO**"
@@ -99,15 +90,12 @@ jobs:
               fi
               echo ""
             } > "$FILE_MD"
-
             cd ..
             rm -rf "$REPO_DIR"
           done
-
       - name: Run Python script to extract package info
         run: |
           python3 parse_required_files.py
-
       - name: Combine changelogs and package summary
         run: |
           NEW_TAG="${{ inputs.new_tag }}"
@@ -123,8 +111,7 @@ jobs:
             echo "## Package Summary"
             echo ""
             cat ReleaseNotes/packages-info.txt
-          } > ReleaseNotes/changelogs-summary.md
-
+          } > ReleaseNotes/ReleaseNotes-Summary.md
       - name: Generate custom CSS header
         run: |
           echo '<style>
@@ -136,21 +123,18 @@ jobs:
             max-width: 100%;
             box-sizing: border-box;
           }
-
           .title {
             text-align: center;
             font-size: 2em;
             font-weight: bold;
             margin: 0.5em auto 1em auto;
           }
-
           h2 {
             text-align: left;
             font-size: 1.5em;
             color: #333;
             margin-top: 2em;
           }
-
           table {
             width: 100%;
             border-collapse: collapse;
@@ -158,14 +142,12 @@ jobs:
             margin-top: 1em;
             margin-bottom: 2em;
           }
-
           th, td {
             border: 1px solid #999;
             padding: 0.5em;
             text-align: left;
             vertical-align: top;
           }
-
           th:nth-child(1),
           td:nth-child(1),
           th:nth-child(2),
@@ -173,7 +155,6 @@ jobs:
             width: 15%;
             white-space: nowrap;
           }
-
           th:nth-child(3),
           td:nth-child(3) {
             width: 70%;
@@ -181,27 +162,23 @@ jobs:
             word-wrap: break-word;
             word-break: break-word;
           }
-
           ul {
             padding-left: 1.5em;
           }
-
           li {
             margin-bottom: 0.3em;
           }
           </style>' > ReleaseNotes/header.html
-
       - name: Convert markdown to HTML
         run: |
-          OUTPUT_FILE="ReleaseNotes/changelogs-summary-${{ inputs.new_tag }}.html"
-          pandoc ReleaseNotes/changelogs-summary.md \
+          OUTPUT_FILE="ReleaseNotes/ReleaseNotes-Summary-${{ inputs.new_tag }}.html"
+          pandoc ReleaseNotes/ReleaseNotes-Summary.md \
             --standalone \
             --include-in-header=ReleaseNotes/header.html \
             -f markdown -t html \
             -o "$OUTPUT_FILE"
-
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
         with:
           name: ReleaseNotes
-          path: ReleaseNotes/changelogs-summary-${{ inputs.new_tag }}.html
+          path: ReleaseNotes/ReleaseNotes-Summary-${{ inputs.new_tag }}.html
