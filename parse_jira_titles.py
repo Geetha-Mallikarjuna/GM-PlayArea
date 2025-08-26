@@ -1,51 +1,73 @@
+import argparse
 import os
 import re
 import requests
+import sys
 
-# Load credentials from environment
-JIRA_URL = os.getenv("JIRA_URL")
-JIRA_EMAIL = os.getenv("JIRA_EMAIL")
-JIRA_API_TOKEN = os.getenv("JIRA_API_TOKEN")
+def extract_jira_ids_from_file(file_path):
+    pattern = re.compile(r'\b(?:ESS|NMS)-\d+\b')
+    ids = set()
+    print(f"🔍 Reading changelog: {file_path}")
+    with open(file_path, 'r') as f:
+        for line in f:
+            found = pattern.findall(line)
+            if found:
+                print(f"✅ Found Jira IDs in line: {line.strip()} → {found}")
+            ids.update(found)
+    return ids
 
-HEADERS = {
-    "Accept": "application/json"
-}
+def get_jira_title(jira_id):
+    base_url = os.getenv("JIRA_URL")
+    email = os.getenv("JIRA_EMAIL")
+    token = os.getenv("JIRA_API_TOKEN")
 
-def extract_jira_ids(text):
-    return sorted(set(re.findall(r'\b(ESS|NMS|DOPS)-\d+\b', text)))
+    if not base_url or not email or not token:
+        raise ValueError("❌ Missing one of: JIRA_URL, JIRA_EMAIL, JIRA_API_TOKEN")
 
-def fetch_jira_title(jira_id):
-    url = f"{JIRA_URL}/rest/api/3/issue/{jira_id}"
-    auth = (JIRA_EMAIL, JIRA_API_TOKEN)
-    response = requests.get(url, headers=HEADERS, auth=auth)
+    url = f"{base_url}/rest/api/3/issue/{jira_id}"
+    print(f"🌐 Requesting Jira title for {jira_id} from {url}")
+    headers = { "Accept": "application/json" }
+
+    response = requests.get(url, auth=(email, token), headers=headers)
+
     if response.status_code == 200:
-        return response.json()['fields']['summary']
-    return None
-
-def process_changelog_file(input_file, output_file):
-    with open(input_file, "r") as f:
-        content = f.read()
-
-    jira_ids = extract_jira_ids(content)
-
-    with open(output_file, "w") as out:
-        if not jira_ids:
-            out.write("- No Jira issues found.\n")
-            return
-        for jid in jira_ids:
-            title = fetch_jira_title(jid)
-            if title:
-                out.write(f"- {jid}: {title}\n")
-            else:
-                out.write(f"- {jid}: ⚠️ Could not fetch title\n")
+        title = response.json()["fields"]["summary"]
+        print(f"✅ {jira_id} → {title}")
+        return title
+    else:
+        print(f"❌ Failed to fetch {jira_id}: {response.status_code}")
+        return f"(Error {response.status_code})"
 
 def main():
-    directory = "ReleaseNotes"
-    for file in os.listdir(directory):
-        if file.startswith("changelog-") and file.endswith(".txt"):
-            input_path = os.path.join(directory, file)
-            output_path = input_path.replace(".txt", ".md")
-            process_changelog_file(input_path, output_path)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--changelogs', nargs='+', required=True)
+    parser.add_argument('--output', required=True)
+    args = parser.parse_args()
+
+    print("📁 Changelog files to process:")
+    for f in args.changelogs:
+        print(f" - {f}")
+
+    jira_ids = set()
+    for file in args.changelogs:
+        if not os.path.exists(file):
+            print(f"⚠️ Skipping missing file: {file}")
+            continue
+        jira_ids.update(extract_jira_ids_from_file(file))
+
+    if not jira_ids:
+        print("⚠️ No Jira IDs found across changelogs. Exiting.")
+        sys.exit(1)
+
+    os.makedirs(os.path.dirname(args.output), exist_ok=True)
+    print(f"📝 Writing Jira summary to: {args.output}")
+
+    with open(args.output, 'w') as f:
+        for jira_id in sorted(jira_ids):
+            title = get_jira_title(jira_id)
+            f.write(f"- {jira_id}: {title}\n")
+
+    print("✅ Done writing Jira titles.")
 
 if __name__ == "__main__":
     main()
