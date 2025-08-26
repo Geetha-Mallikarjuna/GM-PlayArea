@@ -34,7 +34,10 @@ jobs:
 
     env:
       GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
-
+      JIRA_URL: ${{ secrets.JIRA_URL }}
+      JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+      
     steps:
       # Checkout the current repository
       - name: Checkout repository
