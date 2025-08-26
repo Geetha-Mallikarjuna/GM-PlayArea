@@ -12,7 +12,7 @@ HEADERS = {
 }
 
 def extract_jira_ids(text):
-    return sorted(set(re.findall(r'\b(ESS|NMS)-\d+\b', text)))
+    return sorted(set(re.findall(r'\b(ESS|NMS|DOPS)-\d+\b', text)))
 
 def fetch_jira_title(jira_id):
     url = f"{JIRA_URL}/rest/api/3/issue/{jira_id}"
