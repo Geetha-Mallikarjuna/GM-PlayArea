@@ -1,6 +1,5 @@
 name: Generate Release Notes
 
-# Trigger manually with tag inputs
 on:
   workflow_dispatch:
     inputs:
@@ -154,7 +153,7 @@ EOF
             -f markdown -t html \
             -o ReleaseNotes/ReleaseNotes-Summary-${{ inputs.new_tag }}.html
 
-      - name: Upload release notes
+      - name: Upload release notes artifact
         uses: actions/upload-artifact@v4
         with:
           name: ReleaseNotes
