@@ -5,7 +5,7 @@ import requests
 import sys
 
 def extract_jira_ids_from_file(file_path):
-    pattern = re.compile(r'\b(?:ESS|NMS)-\d+\b')
+    pattern = re.compile(r'\b(?:ESS|NMS|DOPS)-\d{3,4}\b')
     ids = set()
     print(f"🔍 Reading changelog: {file_path}")
     with open(file_path, 'r') as f:
