@@ -25,33 +25,25 @@ def create_ReleaseNotes_directory(directory='ReleaseNotes'):
 
 def write_package_summary(require_files, output_path):
     """
-    Writes the package summary into an HTML table inside a text file.
+    Writes the package summary into a Markdown table inside a text file.
+
+    This format is compatible with Pandoc for later conversion to HTML.
 
     Args:
         require_files (list): List of dicts with package info.
         output_path (str): File path to write the summary to.
     """
     with open(output_path, 'w') as out:
-        # Write header
-        # out.write('# 📦 Package Summary from required_files.yaml\n\n')
+        # Write Markdown table header (3 columns)
+        out.write("| Package | Version | Name |\n")
+        out.write("|---------|---------|------|\n")
 
-        # Begin HTML table
-        out.write('<table border="1" cellpadding="5" cellspacing="0">\n')
-        out.write('  <thead>\n')
-        out.write('    <tr><th>Package</th><th>Version</th><th>Name</th></tr>\n')
-        out.write('  </thead>\n')
-        out.write('  <tbody>\n')
-
-        # Loop through each required package and write as HTML row
+        # Loop through each required package and write as a Markdown row
         for item in require_files:
             package = item.get('package', 'N/A')
             version = item.get('version', 'N/A')
             name = item.get('name', 'N/A')
-            out.write(f'    <tr><td>{package}</td><td>{version}</td><td>{name}</td></tr>\n')
-
-        # Close table
-        out.write('  </tbody>\n')
-        out.write('</table>\n')
+            out.write(f"| {package} | {version} | {name} |\n")
 
 def main():
     """
@@ -71,7 +63,7 @@ def main():
     print("📂 Ensuring 'ReleaseNotes' directory exists...")
     create_ReleaseNotes_directory()
 
-    # Generate the HTML summary
+    # Generate the Markdown summary
     print(f"📝 Writing package summary to '{output_file}'...")
     write_package_summary(require_files, output_file)
 
