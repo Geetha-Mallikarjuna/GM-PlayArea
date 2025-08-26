@@ -31,20 +31,27 @@ jobs:
 
     env:
       GH_TOKEN: ${{ secrets.CBNG_PAT }}
+      JIRA_URL: ${{ secrets.JIRA_URL }}
+      JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
     steps:
+      # Checkout the repository so we can use git commands
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Install required system packages and Python dependencies
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml requests
 
+      # Generate changelogs by cloning each repo and gathering commit messages
       - name: Generate changelogs from tags
         run: |
           mkdir -p ReleaseNotes
+
           REPOS=("CBNL/Embedded_utilities" "CBNL/ap-startup" "CBNL/cloud-nms-agent")
           FROM_TAGS=("${{ inputs.from_tag_1 }}" "${{ inputs.from_tag_2 }}" "${{ inputs.from_tag_3 }}")
           TO_TAGS=("${{ inputs.to_tag_1 }}" "${{ inputs.to_tag_2 }}" "${{ inputs.to_tag_3 }}")
@@ -61,7 +68,7 @@ jobs:
             cd "$DIR"
             git fetch --tags
 
-            # Validate tags
+            # Check if tags exist, exit with error if missing
             if ! git rev-parse "$FROM" >/dev/null 2>&1; then
               echo "❌ ERROR: Tag '$FROM' not found in $REPO"
               exit 1
@@ -71,29 +78,28 @@ jobs:
               exit 1
             fi
 
-            # Tag if not already present
+            # Create and push new tag if it doesn't exist
             COMMIT=$(git rev-list -n 1 "$TO")
             if ! git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
               git tag "$NEW_TAG" "$COMMIT"
               git push origin "$NEW_TAG"
             fi
 
-            # Save one-line commit logs
+            # Save one-line commit messages (no markdown) to changelog text file
             git log "$FROM".."$TO" --pretty=format:"%s" > "../ReleaseNotes/changelog-${REPO//\//_}.txt"
             cd ..
             rm -rf "$DIR"
           done
 
+      # Run Python script to extract Jira IDs from changelogs and fetch titles from Jira API
       - name: Extract Jira issues and titles
         run: python3 extract_jira_titles.py
-        env:
-          JIRA_URL: ${{ secrets.JIRA_URL }}
-          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
+      # Run Python script to parse package info from required_files.yaml
       - name: Parse package info from YAML
         run: python3 parse_required_files.py
 
+      # Combine Jira issues and package summary into a markdown summary file
       - name: Combine into Markdown release notes
         run: |
           NEW_TAG="${{ inputs.new_tag }}"
@@ -101,6 +107,7 @@ jobs:
             echo "<div class=\"title\">Release Notes for ${NEW_TAG}</div>"
             echo ""
             echo "## Jira Issues"
+            echo ""
             for file in ReleaseNotes/changelog-*.md; do
               cat "$file"
               echo ""
@@ -110,6 +117,7 @@ jobs:
             cat ReleaseNotes/packages-info.txt
           } > ReleaseNotes/ReleaseNotes-Summary.md
 
+      # Generate custom CSS header for HTML formatting (heredoc with correct indentation)
       - name: Generate custom CSS header
         run: |
           cat << 'EOF' > ReleaseNotes/header.html
@@ -145,6 +153,7 @@ jobs:
 </style>
 EOF
 
+      # Convert markdown summary to styled HTML using Pandoc
       - name: Convert Markdown to HTML
         run: |
           pandoc ReleaseNotes/ReleaseNotes-Summary.md \
@@ -153,6 +162,7 @@ EOF
             -f markdown -t html \
             -o ReleaseNotes/ReleaseNotes-Summary-${{ inputs.new_tag }}.html
 
+      # Upload the generated release notes HTML file as an artifact
       - name: Upload release notes artifact
         uses: actions/upload-artifact@v4
         with:
