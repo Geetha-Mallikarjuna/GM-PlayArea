@@ -1,203 +1,66 @@
-name: Generate Release Notes
+import os
+import re
+import requests
 
-on:
-  workflow_dispatch:
-    inputs:
-      from_tag_1:
-        description: 'From tag for Embedded_utilities'
-        required: true
-      to_tag_1:
-        description: 'To tag for Embedded_utilities'
-        required: true
+# Load Jira credentials from environment variables
+JIRA_URL = os.getenv("JIRA_URL")
+JIRA_EMAIL = os.getenv("JIRA_EMAIL")
+JIRA_API_TOKEN = os.getenv("JIRA_API_TOKEN")
 
-      from_tag_2:
-        description: 'From tag for ap-startup'
-        required: true
-      to_tag_2:
-        description: 'To tag for ap-startup'
-        required: true
+HEADERS = {
+    "Accept": "application/json"
+}
 
-      from_tag_3:
-        description: 'From tag for cloud-nms-agent'
-        required: true
-      to_tag_3:
-        description: 'To tag for cloud-nms-agent'
-        required: true
+def extract_jira_ids(text):
+    """
+    Extract unique Jira IDs from text (e.g., ESS-1234 or NMS-5678)
+    """
+    return sorted(set(re.findall(r'\b(ESS|NMS)-\d+\b', text)))
 
-      new_tag:
-        description: 'New tag to apply at the same commit as To tag'
-        required: true
+def fetch_jira_title(jira_id):
+    """
+    Fetch the title of a Jira ticket using its REST API
+    """
+    url = f"{JIRA_URL}/rest/api/3/issue/{jira_id}"
+    auth = (JIRA_EMAIL, JIRA_API_TOKEN)
 
-jobs:
-  changelog:
-    runs-on: ubuntu-latest
+    response = requests.get(url, headers=HEADERS, auth=auth)
+    if response.status_code == 200:
+        return response.json()['fields']['summary']
+    return None
 
-    env:
-      GH_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+def process_changelog_file(input_file, output_file):
+    """
+    Read the raw changelog file, extract Jira IDs, fetch titles,
+    and write them to a Markdown output file
+    """
+    with open(input_file, "r") as f:
+        content = f.read()
 
-    steps:
-      # Checkout current repository
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    jira_ids = extract_jira_ids(content)
 
-      # Install required dependencies
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y git pandoc python3 python3-pip
-          pip install pyyaml requests
+    with open(output_file, "w") as out:
+        if not jira_ids:
+            out.write("- No Jira issues found.\n")
+            return
+        for jid in jira_ids:
+            title = fetch_jira_title(jid)
+            if title:
+                out.write(f"- {jid}: {title}\n")
+            else:
+                out.write(f"- {jid}: ⚠️ Could not fetch title\n")
 
-      # Generate raw changelogs per repository (no markdown)
-      - name: Generate raw changelogs
-        run: |
-          mkdir -p ReleaseNotes
+def main():
+    """
+    Main function to loop through all changelog-*.txt files,
+    process them, and write changelog-*.md files.
+    """
+    directory = "ReleaseNotes"
+    for file in os.listdir(directory):
+        if file.startswith("changelog-") and file.endswith(".txt"):
+            input_path = os.path.join(directory, file)
+            output_path = input_path.replace(".txt", ".md")
+            process_changelog_file(input_path, output_path)
 
-          REPOS=(
-            "Geetha-Mallikarjuna/GM-PlayArea"
-            "Geetha-Mallikarjuna/GM-PlayArea-2"
-            "Geetha-Mallikarjuna/GM-PlayArea-3"
-          )
-          FROM_TAGS=(
-            "${{ inputs.from_tag_1 }}"
-            "${{ inputs.from_tag_2 }}"
-            "${{ inputs.from_tag_3 }}"
-          )
-          TO_TAGS=(
-            "${{ inputs.to_tag_1 }}"
-            "${{ inputs.to_tag_2 }}"
-            "${{ inputs.to_tag_3 }}"
-          )
-          NEW_TAG="${{ inputs.new_tag }}"
-
-          for i in 0 1 2; do
-            REPO="${REPOS[$i]}"
-            FROM="${FROM_TAGS[$i]}"
-            TO="${TO_TAGS[$i]}"
-            REPO_DIR=$(basename "$REPO")
-
-            echo "📦 Processing: $REPO"
-
-            git clone --quiet "https://${GH_TOKEN}@github.com/$REPO.git"
-            cd "$REPO_DIR"
-
-            git fetch --tags
-
-            if ! git rev-parse "$FROM" >/dev/null 2>&1; then
-              echo "❌ ERROR: Tag '$FROM' not found in '$REPO'"
-              exit 1
-            fi
-
-            if ! git rev-parse "$TO" >/dev/null 2>&1; then
-              echo "❌ ERROR: Tag '$TO' not found in '$REPO'"
-              exit 1
-            fi
-
-            COMMIT=$(git rev-list -n 1 "$TO")
-            if [[ -n "$COMMIT" ]]; then
-              git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
-              if ! git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-                git tag "$NEW_TAG" "$COMMIT"
-                git push origin "$NEW_TAG"
-              fi
-            fi
-
-            # Save plain one-line changelog
-            FILE_RAW="../ReleaseNotes/changelog-${REPO//\//_}.txt"
-            git log "$FROM".."$TO" --pretty=format:"%s" > "$FILE_RAW"
-
-            cd ..
-            rm -rf "$REPO_DIR"
-          done
-
-      # Run Python script to extract Jira titles
-      - name: Extract Jira titles and convert to Markdown
-        run: |
-          python3 extract_jira_titles.py
-        env:
-          JIRA_URL: ${{ secrets.JIRA_URL }}
-          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-
-      # Combine changelogs and package summary into markdown
-      - name: Combine changelogs and package summary
-        run: |
-          NEW_TAG="${{ inputs.new_tag }}"
-          {
-            echo "<div class=\"title\">Release Notes for ${NEW_TAG}</div>"
-            echo ""
-            echo "## Jira Issues"
-            echo ""
-            for file in ReleaseNotes/changelog-*.md; do
-              cat "$file"
-              echo ""
-            done
-            echo "## Package Summary"
-            echo ""
-            cat ReleaseNotes/packages-info.txt
-          } > ReleaseNotes/ReleaseNotes-Summary.md
-
-      # Generate CSS for HTML rendering
-      - name: Generate custom CSS header
-        run: |
-          cat << 'EOF' > ReleaseNotes/header.html
-          <style>
-            body {
-              margin: 0;
-              padding: 2em;
-              font-family: Arial, sans-serif;
-              max-width: 100%;
-              box-sizing: border-box;
-            }
-            .title {
-              text-align: center;
-              font-size: 2em;
-              font-weight: bold;
-              margin: 0.5em auto 1em auto;
-            }
-            h2 {
-              text-align: left;
-              font-size: 1.5em;
-              color: #333;
-              margin-top: 2em;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 1em;
-              margin-bottom: 2em;
-            }
-            th, td {
-              border: 1px solid #999;
-              padding: 0.5em;
-              text-align: left;
-              vertical-align: top;
-            }
-            th:nth-child(1),
-            td:nth-child(1),
-            th:nth-child(2),
-            td:nth-child(2) {
-              width: 15%;
-            }
-            th:nth-child(3),
-            td:nth-child(3) {
-              width: 70%;
-            }
-          </style>
-EOF
-
-      # Convert Markdown to styled HTML
-      - name: Convert markdown to HTML
-        run: |
-          OUTPUT_FILE="ReleaseNotes/ReleaseNotes-Summary-${{ inputs.new_tag }}.html"
-          pandoc ReleaseNotes/ReleaseNotes-Summary.md \
-            --standalone \
-            --include-in-header=ReleaseNotes/header.html \
-            -f markdown -t html \
-            -o "$OUTPUT_FILE"
-
-      # Upload artifact
-      - name: Upload Release Notes
-        uses: actions/upload-artifact@v4
-        with:
-          name: ReleaseNotes
-          path: ReleaseNotes/ReleaseNotes-Summary-${{ inputs.new_tag }}.html
+if __name__ == "__main__":
+    main()
