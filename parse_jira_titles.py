@@ -105,7 +105,7 @@ def write_markdown_table(details_list, output_file):
         output_file (str): Path to write markdown file.
     """
     print(f"📝 Writing Jira summary table to: {output_file}")
-	with open(output_file, 'w') as f:
+    with open(output_file, 'w') as f:
         f.write("<style>\n")
         f.write("table { width: 100%; border-collapse: collapse; }\n")
         f.write("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }\n")
@@ -114,7 +114,6 @@ def write_markdown_table(details_list, output_file):
         f.write("th:nth-child(3) { width: 10%; white-space: nowrap; }\n")
         f.write("th:nth-child(4), th:nth-child(5) { width: 25%; word-break: break-word; }\n")
         f.write("</style>\n")
-
         f.write("<table>\n")
         f.write("<tr><th>Jira ID</th><th>Title</th><th>Status</th><th>Pre-Change Note</th><th>Post-Change Note</th></tr>\n")
 
