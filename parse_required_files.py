@@ -4,8 +4,9 @@ Package Summary Generator
 This script parses a YAML file containing package requirements and generates
 an HTML-formatted package summary as a table saved to a specified output file.
 
-Usage:
-    python generate_package_summary.py --input required_files.yaml --output ReleaseNotes/packages-info.txt
+It is hardcoded to use:
+  Input:  'CI_create_package/required_files.yaml'
+  Output: 'ReleaseNotes/packages-info.txt'
 
 Features:
 - Loads and parses YAML content safely.
@@ -19,7 +20,6 @@ import yaml
 import os
 import logging
 from typing import List, Dict, Optional
-import argparse
 
 def setup_logging():
     """Setup basic logging configuration."""
@@ -100,26 +100,13 @@ def write_package_summary(require_files: List[Dict], output_path: str) -> None:
         out_file.write(html_content)
     logging.info(f"Package summary successfully written to '{output_path}'")
 
-def parse_arguments() -> argparse.Namespace:
+def main() -> None:
     """
-    Parses command-line arguments.
+    Main function to load hardcoded YAML input and write the summary to hardcoded output.
+    """
+    input_file = 'CI_create_package/required_files.yaml'
+    output_file = 'ReleaseNotes/packages-info.txt'
 
-    Returns:
-        argparse.Namespace: Parsed arguments with input and output file paths.
-    """
-    parser = argparse.ArgumentParser(description='Generate an HTML package summary from a YAML requirements file.')
-    parser.add_argument('--input', '-i', type=str, required=True, help='Path to the input YAML file (e.g., required_files.yaml)')
-    parser.add_argument('--output', '-o', type=str, default='ReleaseNotes/packages-info.txt', help='Path to output summary file (HTML)')
-    return parser.parse_args()
-
-def main(input_file: str, output_file: str) -> None:
-    """
-    Main processing function.
-
-    Args:
-        input_file (str): Path to the YAML file containing package requirements.
-        output_file (str): Path to output the HTML summary.
-    """
     logging.info(f"Loading YAML data from '{input_file}'...")
     data = load_yaml(input_file)
     if data is None:
@@ -137,5 +124,4 @@ def main(input_file: str, output_file: str) -> None:
 
 if __name__ == "__main__":
     setup_logging()
-    args = parse_arguments()
-    main(args.input, args.output)
+    main()
