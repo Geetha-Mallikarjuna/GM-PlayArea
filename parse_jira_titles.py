@@ -9,8 +9,8 @@ import sys
 # -------------------------------
 
 # Update these based on your Jira setup (use actual field IDs!)
-JIRA_FIELD_PRE_CHANGE = "customfield_100XX"   # Replace with actual field ID
-JIRA_FIELD_POST_CHANGE = "customfield_100YY"  # Replace with actual field ID
+JIRA_FIELD_PRE_CHANGE = "customfield_10131"   # Replace with actual field ID
+JIRA_FIELD_POST_CHANGE = "customfield_10096"  # Replace with actual field ID
 
 # -------------------------------
 # Helper Function: Extract Jira IDs from a file
@@ -136,11 +136,11 @@ def write_output_table(jira_details_list, output_path):
             print(f"⚠️ No Jira IDs found. Output written to {output_path}")
             return
 
-        f.write("| Jira ID | Status | Title | Release Notes - Pre Change | Release Notes - Post Change |\n")
+        f.write("| Jira ID | Title | Status | Release Notes - Pre Change | Release Notes - Post Change |\n")
         f.write("|---------|--------|-------|-----------------------------|------------------------------|\n")
 
         for issue in jira_details_list:
-            f.write(f"| {issue['id']} | {issue['status']} | {issue['title']} | {issue['pre_change']} | {issue['post_change']} |\n")
+            f.write(f"| {issue['id']} | {issue['title']} | {issue['status']} | {issue['pre_change']} | {issue['post_change']} |\n")
 
     print(f"✅ Jira report written to: {output_path}")
 
