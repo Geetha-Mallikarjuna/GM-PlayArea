@@ -116,7 +116,7 @@ def write_markdown_table(details_list, output_file):
         f.write("th:nth-child(1), td:nth-child(1) { width: 5%; white-space: nowrap; }\n")
         f.write("th:nth-child(2), td:nth-child(2) { width: 10%; white-space: nowrap;}\n")
         f.write("th:nth-child(3), td:nth-child(3),th:nth-child(4), td:nth-child(4), { width: 5%; white-space: nowrap;}\n")
-		f.write("th:nth-child(5), td:nth-child(5), th:nth-child(6), td:nth-child(6) { width: 20%; word-break: break-word; }\n")
+        f.write("th:nth-child(5), td:nth-child(5), th:nth-child(6), td:nth-child(6) { width: 20%; word-break: break-word; }\n")
         f.write("</style>\n")
         f.write("<table>\n")
         f.write("<tr><th>Jira ID</th><th>Title</th><th>Status</th><th>CustomerVisible</th><th>Pre-Change Note</th><th>Post-Change Note</th></tr>\n")
