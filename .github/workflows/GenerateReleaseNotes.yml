@@ -1,3 +1,16 @@
+# --------------------------------------------------------------------------------------
+# 📦 Generate Release Notes Workflow
+# --------------------------------------------------------------------------------------
+# This GitHub Actions workflow automates the creation of release notes by:
+#   ✅ Generating changelogs from Git tags (from_tag → to_tag) across multiple repos
+#   ✅ Parsing commit messages for Jira IDs
+#   ✅ Fetching Jira summaries, status, and release metadata via API
+#   ✅ Collecting and formatting package info from required_files.yaml
+#   ✅ Producing a styled HTML release summary
+#
+# Trigger: Manual via workflow_dispatch with tag inputs
+# --------------------------------------------------------------------------------------
+
 name: Generate Release Notes
 
 on:
@@ -49,6 +62,7 @@ jobs:
           sudo apt update
           sudo apt install -y git pandoc python3 python3-pip
           pip install pyyaml requests
+
       # Generate changelogs and apply new tags if necessary
       - name: Generate changelogs
         run: |
@@ -75,23 +89,29 @@ jobs:
             FROM="${FROM_TAGS[$i]}"
             TO="${TO_TAGS[$i]}"
             REPO_DIR=$(basename "$REPO")
+
+            # Clone the repo quietly
             git clone --quiet "https://${GH_TOKEN}@github.com/$REPO.git"
             cd "$REPO_DIR"
             git fetch --tags
+
             # --- 🔒 ERROR HANDLING FOR TAGS ---
             # Ensure FROM tag exists
             if ! git rev-parse "$FROM" >/dev/null 2>&1; then
               echo "❌ ERROR: Tag '$FROM' does not exist in repository '$REPO'. Please check the input."
               exit 1
             fi
+
             # Ensure TO tag exists
             if ! git rev-parse "$TO" >/dev/null 2>&1; then
               echo "❌ ERROR: Tag '$TO' does not exist in repository '$REPO'. Please check the input."
               exit 1
             fi
             # --- ✅ TAGS VALIDATED ---
+
             # Determine the commit SHA for the 'to' tag
             COMMIT=$(git rev-list -n 1 "$TO" 2>/dev/null)
+
             # If the commit exists, optionally apply the new tag
             if [[ -n "$COMMIT" ]]; then
               git remote set-url origin https://${GH_TOKEN}@github.com/${REPO}.git
@@ -101,20 +121,26 @@ jobs:
                 git push origin "$NEW_TAG"
               fi
             fi
+
             # Generate one-line changelog without markdown for easier parsing
             FILE_MD="../ReleaseNotes/changelog-${REPO//\//_}.txt"
             git log "$FROM".."$TO" --pretty=format:"%s" > "$FILE_MD"
+
+            # Cleanup
             cd ..
             rm -rf "$REPO_DIR"
           done
+
       # Run Python script to extract Jira IDs and get their titles
       - name: Extract Jira titles from changelogs
         run: |
           python3 parse_jira_titles.py --changelogs ReleaseNotes/changelog-*.txt --output ReleaseNotes/markdone.md
+
       # Run a Python script to extract and summarize package info
       - name: Run Python script to extract package info
         run: |
           python3 parse_required_files.py
+
       # Combine individual changelogs and package summary into a single markdown file
       - name: Combine changelogs and package summary
         run: |
@@ -130,6 +156,7 @@ jobs:
             echo ""
             cat ReleaseNotes/packages-info.txt
           } > ReleaseNotes/ReleaseNotes-Summary.md
+
       # Generate custom CSS header for HTML formatting (fixed indentation)
       - name: Generate custom CSS header
         run: |
@@ -165,6 +192,7 @@ jobs:
               padding: 0.5em;
               text-align: left;
               vertical-align: top;
+              word-break: break-word;
             }
             th:nth-child(1), td:nth-child(1),
             th:nth-child(2), td:nth-child(2) {
@@ -178,6 +206,7 @@ jobs:
             }
           </style>
           EOF
+
       # Convert markdown summary to standalone HTML with custom CSS header
       - name: Convert markdown to HTML
         run: |
@@ -187,6 +216,7 @@ jobs:
             --include-in-header=ReleaseNotes/header.html \
             -f markdown -t html \
             -o "$OUTPUT_FILE"
+
       # Upload the generated HTML file as a workflow artifact
       - name: Upload changelogs as artifact
         uses: actions/upload-artifact@v4
