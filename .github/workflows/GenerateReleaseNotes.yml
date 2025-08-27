@@ -134,7 +134,7 @@ jobs:
       # Run Python script to extract Jira IDs and get their titles
       - name: Extract Jira titles from changelogs
         run: |
-          python3 parse_jira_titles.py --changelogs ReleaseNotes/changelog-*.txt --output ReleaseNotes/markdone.md
+          python3 parse_jira.py --changelogs ReleaseNotes/changelog-*.txt --output ReleaseNotes/markdone.md
 
       # Run a Python script to extract and summarize package info
       - name: Run Python script to extract package info
