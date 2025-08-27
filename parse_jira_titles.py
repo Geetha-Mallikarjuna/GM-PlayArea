@@ -1,3 +1,37 @@
+"""
+📘 Jira Changelog Processor
+
+This script automates the generation of a structured HTML-formatted changelog summary
+by extracting Jira issue IDs from given changelog files, querying the Jira API for 
+detailed issue information, and writing a styled HTML table to a markdown file.
+
+Key Features:
+-------------
+1. Parses changelog `.txt` files to extract Jira IDs (e.g., ESS-1234, NMS-567).
+2. Fetches each Jira issue's:
+   - Title
+   - Status
+   - Pre-Change Notes (from customfield_10131)
+   - Post-Change Notes (from customfield_10096)
+   - 'Include in Release Notes' flag (from customfield_10053)
+3. Outputs a well-formatted HTML table embedded in a markdown file.
+
+Use Case:
+---------
+Used in CI/CD workflows to generate automated release notes from commit messages 
+and Jira metadata. Typically triggered by GitHub Actions or other automation systems.
+
+Environment Variables Required:
+-------------------------------
+- `JIRA_URL`: Base URL of your Jira instance (e.g., https://yourcompany.atlassian.net)
+- `JIRA_EMAIL`: Your Jira account email
+- `JIRA_API_TOKEN`: API token with access to read Jira issues
+
+Example:
+--------
+python3 parse_jira_titles.py --changelogs ReleaseNotes/changelog-*.txt --output ReleaseNotes/markdone.md
+"""
+
 import argparse
 import os
 import re
@@ -87,7 +121,7 @@ def get_jira_details(jira_id):
     # Custom field IDs
     JIRA_FIELD_PRE_CHANGE = "customfield_10131"
     JIRA_FIELD_POST_CHANGE = "customfield_10096"
-    JIRA_FIELD_INCLUDE_FLAG = "customfield_10053"  # <-- NEW FIELD
+    JIRA_FIELD_INCLUDE_FLAG = "customfield_10053"
 
     return {
         "jira": jira_id,
@@ -95,9 +129,8 @@ def get_jira_details(jira_id):
         "status": fields.get("status", {}).get("name", "—"),
         "pre_change": extract_text_from_adf(fields.get(JIRA_FIELD_PRE_CHANGE, {})) or "—",
         "post_change": extract_text_from_adf(fields.get(JIRA_FIELD_POST_CHANGE, {})) or "—",
-        "include_in_release_notes": fields.get(JIRA_FIELD_INCLUDE_FLAG, "—") or "—"
+        "include_in_release_notes": fields.get(JIRA_FIELD_INCLUDE_FLAG, {}).get("value", "—")
     }
-
 
 
 def write_markdown_table(details_list, output_file):
@@ -111,20 +144,23 @@ def write_markdown_table(details_list, output_file):
     print(f"📝 Writing Jira summary table to: {output_file}")
     with open(output_file, 'w') as f:
         f.write("<style>\n")
-        f.write("table { width: 100%; border-collapse: collapse; table-layout: fixed;  }\n")
+        f.write("table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n")
         f.write("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }\n")
         f.write("th:nth-child(1), td:nth-child(1) { width: 5%; white-space: nowrap; }\n")
-        f.write("th:nth-child(2), td:nth-child(2) { width: 10%; white-space: nowrap;}\n")
-        f.write("th:nth-child(3), td:nth-child(3),th:nth-child(4), td:nth-child(4), { width: 5%; white-space: nowrap;}\n")
+        f.write("th:nth-child(2), td:nth-child(2) { width: 10%; white-space: nowrap; }\n")
+        f.write("th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4) { width: 5%; white-space: nowrap; }\n")
         f.write("th:nth-child(5), td:nth-child(5), th:nth-child(6), td:nth-child(6) { width: 20%; word-break: break-word; }\n")
         f.write("</style>\n")
+
         f.write("<table>\n")
         f.write("<tr><th>Jira ID</th><th>Title</th><th>Status</th><th>CustomerVisible</th><th>Pre-Change Note</th><th>Post-Change Note</th></tr>\n")
 
         for item in details_list:
             jira_link = f"<a href='{os.getenv('JIRA_URL')}/browse/{item['jira']}' target='_blank'>{item['jira']}</a>"
-            f.write(f"<tr><td>{jira_link}</td><td>{item['title']}</td><td>{item['status']}</td><td>{item['include_in_release_notes']}</td>"
-                    f"<td>{item['pre_change']}</td><td>{item['post_change']}</td></tr>\n")
+            f.write(
+                f"<tr><td>{jira_link}</td><td>{item['title']}</td><td>{item['status']}</td>"
+                f"<td>{item['include_in_release_notes']}</td><td>{item['pre_change']}</td><td>{item['post_change']}</td></tr>\n"
+            )
 
         f.write("</table>\n")
     print("✅ Done writing Jira titles.")
