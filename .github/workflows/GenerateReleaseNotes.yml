@@ -1,4 +1,4 @@
-name: Generate Release Notes
+ame: Generate Release Notes
 
 on:
   workflow_dispatch:
@@ -122,10 +122,6 @@ jobs:
             echo ""
             echo "## Change List"
             echo ""
-            for file in ReleaseNotes/changelog-*.txt; do
-              cat "$file"
-              echo ""
-            done
             echo "## Jira Titles"
             echo ""
             cat ReleaseNotes/markdone.md
@@ -186,4 +182,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ReleaseNotes
-          path: ReleaseNotes/ReleaseNotes-Summary-${{ inputs.new_tag }}.html
+          path: ReleaseNotes/*
