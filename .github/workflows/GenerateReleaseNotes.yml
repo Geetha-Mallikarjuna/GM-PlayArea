@@ -182,8 +182,7 @@ jobs:
               white-space: nowrap;
             }
             th:nth-child(3), td:nth-child(3) {
-             width: 70%;
-             white-space: nowrap;
+             width: auto;
             }
           </style>
           EOF
