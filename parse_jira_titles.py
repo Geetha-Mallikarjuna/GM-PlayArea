@@ -84,8 +84,8 @@ def get_jira_details(jira_id):
     fields = issue.get("fields", {})
 
     # Change these to match your actual Jira custom field names
-    JIRA_FIELD_PRE_CHANGE = "customfield_10043"
-    JIRA_FIELD_POST_CHANGE = "customfield_10044"
+    JIRA_FIELD_PRE_CHANGE = "customfield_10131"
+    JIRA_FIELD_POST_CHANGE = "customfield_10096"
 
     return {
         "jira": jira_id,
@@ -106,8 +106,8 @@ def write_markdown_table(details_list, output_file):
     """
     print(f"📝 Writing Jira summary table to: {output_file}")
     with open(output_file, 'w') as f:
-        f.write("| Jira ID | Title | Status | Pre-Change Note | Post-Change Note |\n")
-        f.write("|---------|-------|--------|------------------|-------------------|\n")
+        f.write("| Jira ID | Title | Status | Release Note Pre Text | Release Note Post Text |\n")
+        f.write("|---------|-------|--------|-----------------------|------------------------|\n")
         for item in details_list:
             jira_link = f"[{item['jira']}]({os.getenv('JIRA_URL')}/browse/{item['jira']})"
             f.write(f"| {jira_link} | {item['title']} | {item['status']} | {item['pre_change']} | {item['post_change']} |\n")
