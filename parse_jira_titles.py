@@ -4,172 +4,149 @@ import re
 import requests
 import sys
 
-# -------------------------------
-# Configuration for custom fields
-# -------------------------------
-
-# Update these based on your Jira setup (use actual field IDs!)
-JIRA_FIELD_PRE_CHANGE = "customfield_10131"   # Replace with actual field ID
-JIRA_FIELD_POST_CHANGE = "customfield_10096"  # Replace with actual field ID
-
-# -------------------------------
-# Helper Function: Extract Jira IDs from a file
-# -------------------------------
 
 def extract_jira_ids_from_file(file_path):
     """
-    Scans a file line by line and extracts all Jira IDs matching
-    the pattern DOPS-123, ESS-456, or NMS-789.
+    Extract Jira IDs like ESS-1234, NMS-567, DOPS-7890 from a changelog file.
 
     Args:
         file_path (str): Path to the changelog file.
 
     Returns:
-        set: Unique set of matched Jira IDs.
+        set: Set of Jira IDs found in the file.
     """
     pattern = re.compile(r'\b(?:ESS|NMS|DOPS)-\d{3,4}\b')
     ids = set()
-
     print(f"🔍 Reading changelog: {file_path}")
     with open(file_path, 'r') as f:
         for line in f:
             found = pattern.findall(line)
             if found:
-                print(f"✅ Found Jira IDs: {found}")
+                print(f"✅ Found Jira IDs in line: {line.strip()} → {found}")
             ids.update(found)
-
     return ids
 
-# -------------------------------
-# Helper Function: Get Jira Issue Details
-# -------------------------------
+
+def extract_text_from_adf(adf_json):
+    """
+    Recursively extracts plain text from Atlassian Document Format (ADF).
+
+    Args:
+        adf_json (dict or list): ADF structure.
+
+    Returns:
+        str: Flattened text content.
+    """
+    if isinstance(adf_json, dict):
+        if adf_json.get("type") == "text":
+            return adf_json.get("text", "")
+        elif "content" in adf_json:
+            return ''.join(extract_text_from_adf(child) for child in adf_json["content"])
+    elif isinstance(adf_json, list):
+        return ''.join(extract_text_from_adf(item) for item in adf_json)
+    return ''
+
 
 def get_jira_details(jira_id):
     """
-    Fetches summary, status, and custom release note fields from a Jira issue.
-    Handles custom field types gracefully.
+    Fetch summary, status, and release note fields from Jira.
+
+    Args:
+        jira_id (str): Jira issue key (e.g., DOPS-1234)
+
+    Returns:
+        dict: Dictionary with Jira issue info
     """
     base_url = os.getenv("JIRA_URL")
     email = os.getenv("JIRA_EMAIL")
     token = os.getenv("JIRA_API_TOKEN")
 
-    if not all([base_url, email, token]):
-        raise EnvironmentError("❌ Missing Jira credentials in environment variables.")
+    if not base_url or not email or not token:
+        raise ValueError("❌ Missing JIRA_URL, JIRA_EMAIL, or JIRA_API_TOKEN in environment variables.")
 
     url = f"{base_url}/rest/api/3/issue/{jira_id}"
-    headers = {"Accept": "application/json"}
+    print(f"🌐 Requesting Jira title for {jira_id} from {url}")
 
-    print(f"🌐 Fetching Jira issue: {jira_id}")
+    headers = { "Accept": "application/json" }
     response = requests.get(url, auth=(email, token), headers=headers)
 
     if response.status_code != 200:
-        print(f"❌ Failed to fetch {jira_id} (Status: {response.status_code})")
+        print(f"❌ Failed to fetch {jira_id}: {response.status_code}")
         return {
-            "id": jira_id,
+            "jira": jira_id,
             "title": f"(Error {response.status_code})",
-            "status": "Unknown",
+            "status": "—",
             "pre_change": "—",
             "post_change": "—"
         }
 
-    data = response.json()
-    fields = data.get("fields", {})
+    issue = response.json()
+    fields = issue.get("fields", {})
 
-    # Safe helpers to convert field values to string
-    def safe_str(field_value):
-        if isinstance(field_value, str):
-            return field_value.strip()
-        elif isinstance(field_value, dict) or isinstance(field_value, list):
-            return str(field_value)
-        elif field_value is None:
-            return "—"
-        else:
-            return str(field_value).strip()
-
-    title = safe_str(fields.get("summary"))
-    status = fields.get("status", {}).get("name", "Unknown")
-    pre_change = safe_str(fields.get(JIRA_FIELD_PRE_CHANGE))
-    post_change = safe_str(fields.get(JIRA_FIELD_POST_CHANGE))
+    # Change these to match your actual Jira custom field names
+    JIRA_FIELD_PRE_CHANGE = "customfield_10043"
+    JIRA_FIELD_POST_CHANGE = "customfield_10044"
 
     return {
-        "id": jira_id,
-        "title": title,
-        "status": status,
-        "pre_change": pre_change,
-        "post_change": post_change
+        "jira": jira_id,
+        "title": fields.get("summary", "—"),
+        "status": fields.get("status", {}).get("name", "—"),
+        "pre_change": extract_text_from_adf(fields.get(JIRA_FIELD_PRE_CHANGE, {})) or "—",
+        "post_change": extract_text_from_adf(fields.get(JIRA_FIELD_POST_CHANGE, {})) or "—"
     }
 
-# -------------------------------
-# Function: Process changelog files
-# -------------------------------
 
-def collect_all_jira_ids(changelog_files):
+def write_markdown_table(details_list, output_file):
     """
-    Iterates over multiple changelog files and collects all Jira IDs.
+    Writes a markdown table of Jira issues to a file.
 
     Args:
-        changelog_files (list): List of file paths.
-
-    Returns:
-        set: Combined set of all Jira IDs found.
+        details_list (list): List of Jira info dictionaries.
+        output_file (str): Path to write markdown file.
     """
-    all_ids = set()
-    for file in changelog_files:
+    print(f"📝 Writing Jira summary table to: {output_file}")
+    with open(output_file, 'w') as f:
+        f.write("| Jira ID | Title | Status | Pre-Change Note | Post-Change Note |\n")
+        f.write("|---------|-------|--------|------------------|-------------------|\n")
+        for item in details_list:
+            jira_link = f"[{item['jira']}]({os.getenv('JIRA_URL')}/browse/{item['jira']})"
+            f.write(f"| {jira_link} | {item['title']} | {item['status']} | {item['pre_change']} | {item['post_change']} |\n")
+    print("✅ Done writing Jira titles.")
+
+
+def main():
+    """
+    Main entry point. Parses CLI args and processes Jira changelog files.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--changelogs', nargs='+', required=True, help="Paths to changelog .txt files")
+    parser.add_argument('--output', required=True, help="Path to output markdown file")
+    args = parser.parse_args()
+
+    print("📁 Changelog files to process:")
+    for f in args.changelogs:
+        print(f" - {f}")
+
+    # Collect unique Jira IDs
+    jira_ids = set()
+    for file in args.changelogs:
         if not os.path.exists(file):
             print(f"⚠️ Skipping missing file: {file}")
             continue
-        all_ids.update(extract_jira_ids_from_file(file))
-    return all_ids
+        jira_ids.update(extract_jira_ids_from_file(file))
 
-# -------------------------------
-# Function: Write output to Markdown table
-# -------------------------------
+    if not jira_ids:
+        print("⚠️ No Jira IDs found. Writing default message.")
+        with open(args.output, 'w') as f:
+            f.write("_No Jira issues found in changelogs._\n")
+        sys.exit(0)
 
-def write_output_table(jira_details_list, output_path):
-    """
-    Writes a Markdown table with Jira details.
-
-    Args:
-        jira_details_list (list of dict): List of issue details.
-        output_path (str): Output file path.
-    """
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-    with open(output_path, 'w') as f:
-        if not jira_details_list:
-            f.write("_No Jira issues found._\n")
-            print(f"⚠️ No Jira IDs found. Output written to {output_path}")
-            return
-
-        f.write("| Jira ID | Title | Status | Release Notes - Pre Change | Release Notes - Post Change |\n")
-        f.write("|---------|--------|-------|-----------------------------|------------------------------|\n")
-
-        for issue in jira_details_list:
-            f.write(f"| {issue['id']} | {issue['title']} | {issue['status']} | {issue['pre_change']} | {issue['post_change']} |\n")
-
-    print(f"✅ Jira report written to: {output_path}")
-
-# -------------------------------
-# Main Entry Point
-# -------------------------------
-
-def main():
-    parser = argparse.ArgumentParser(description="Extract Jira details from changelogs.")
-    parser.add_argument('--changelogs', nargs='+', required=True, help='Paths to changelog files.')
-    parser.add_argument('--output', required=True, help='Markdown output file path.')
-    args = parser.parse_args()
-
-    print("📁 Processing changelog files...")
-    jira_ids = collect_all_jira_ids(args.changelogs)
-
-    print(f"📌 Total Jira IDs found: {len(jira_ids)}")
-
+    # Get full Jira info
     details_list = [get_jira_details(jira_id) for jira_id in sorted(jira_ids)]
-    write_output_table(details_list, args.output)
 
-# -------------------------------
-# Script Execution
-# -------------------------------
+    # Write markdown
+    write_markdown_table(details_list, args.output)
+
 
 if __name__ == "__main__":
     main()
