@@ -107,7 +107,7 @@ def write_markdown_table(details_list, output_file):
     print(f"📝 Writing Jira summary table to: {output_file}")
     with open(output_file, 'w') as f:
         f.write("<style>\n")
-        f.write("table { width: 100%; border-collapse: collapse; }\n")
+        f.write("table { width: 100%; border-collapse: collapse; table-layout: fixed;  }\n")
         f.write("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }\n")
         f.write("th:nth-child(1) { width: 10%; white-space: nowrap; }\n")
         f.write("th:nth-child(2) { width: 10%; }\n")
