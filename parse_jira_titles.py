@@ -110,7 +110,7 @@ def write_markdown_table(details_list, output_file):
         f.write("table { width: 100%; border-collapse: collapse; }\n")
         f.write("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }\n")
         f.write("th:nth-child(1) { width: 10%; white-space: nowrap; }\n")
-        f.write("th:nth-child(2) { width: 30%; }\n")
+        f.write("th:nth-child(2) { width: 10%; }\n")
         f.write("th:nth-child(3) { width: 10%; white-space: nowrap; }\n")
         f.write("th:nth-child(4), th:nth-child(5) { width: 25%; word-break: break-word; }\n")
         f.write("</style>\n")
