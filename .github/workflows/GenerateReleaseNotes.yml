@@ -138,7 +138,6 @@ jobs:
               font-family: Arial, sans-serif;
               padding: 2em;
               margin: 0;
-              box-sizing: border-box;
             }
             .title {
               font-size: 2em;
@@ -150,28 +149,21 @@ jobs:
               width: 100%;
               border-collapse: collapse;
               margin-top: 1em;
-              table-layout: auto;
             }
             th, td {
               border: 1px solid #999;
               padding: 0.5em;
               text-align: left;
-              vertical-align: top;
-              word-wrap: break-word;
-              word-break: break-word;
             }
             th:nth-child(1), td:nth-child(1),
             th:nth-child(2), td:nth-child(2) {
-              white-space: nowrap;
+              width: 15%;
             }
             th:nth-child(3), td:nth-child(3) {
-              width: 100%;
+              width: 70%;
             }
           </style>
           EOF
-
-		 
-
       # Convert markdown summary to standalone HTML with custom CSS header
       - name: Convert markdown to HTML
         run: |
