@@ -171,15 +171,13 @@ jobs:
               width: 100%;
               border-collapse: collapse;
               margin-top: 1em;
-              table-layout: auto;
+              table-layout: auto;   
             }
             th, td {
               border: 1px solid #999;
               padding: 0.5em;
               text-align: left;
               vertical-align: top;
-              word-wrap: break-word;
-              word-break: break-word;
             }
             th:nth-child(1), td:nth-child(1),
             th:nth-child(2), td:nth-child(2) {
@@ -188,6 +186,11 @@ jobs:
             }
             th:nth-child(3), td:nth-child(3) {
              width: 100%;
+             td:nth-child(3) > div {
+             white-space: nowrap;
+             overflow-x: auto;
+             display: block;
+            }
             }
           </style>
           EOF
