@@ -49,7 +49,7 @@ def extract_text_from_adf(adf_json):
 
 def get_jira_details(jira_id):
     """
-    Fetch summary, status, and release note fields from Jira.
+    Fetch summary, status, release notes, and inclusion flag from Jira.
 
     Args:
         jira_id (str): Jira issue key (e.g., DOPS-1234)
@@ -67,7 +67,7 @@ def get_jira_details(jira_id):
     url = f"{base_url}/rest/api/3/issue/{jira_id}"
     print(f"🌐 Requesting Jira title for {jira_id} from {url}")
 
-    headers = { "Accept": "application/json" }
+    headers = {"Accept": "application/json"}
     response = requests.get(url, auth=(email, token), headers=headers)
 
     if response.status_code != 200:
@@ -77,23 +77,27 @@ def get_jira_details(jira_id):
             "title": f"(Error {response.status_code})",
             "status": "—",
             "pre_change": "—",
-            "post_change": "—"
+            "post_change": "—",
+            "include_in_release_notes": "—"
         }
 
     issue = response.json()
     fields = issue.get("fields", {})
 
-    # Change these to match your actual Jira custom field names
+    # Custom field IDs
     JIRA_FIELD_PRE_CHANGE = "customfield_10131"
     JIRA_FIELD_POST_CHANGE = "customfield_10096"
+    JIRA_FIELD_INCLUDE_FLAG = "customfield_10053"  # <-- NEW FIELD
 
     return {
         "jira": jira_id,
         "title": fields.get("summary", "—"),
         "status": fields.get("status", {}).get("name", "—"),
         "pre_change": extract_text_from_adf(fields.get(JIRA_FIELD_PRE_CHANGE, {})) or "—",
-        "post_change": extract_text_from_adf(fields.get(JIRA_FIELD_POST_CHANGE, {})) or "—"
+        "post_change": extract_text_from_adf(fields.get(JIRA_FIELD_POST_CHANGE, {})) or "—",
+        "include_in_release_notes": fields.get(JIRA_FIELD_INCLUDE_FLAG, "—") or "—"
     }
+
 
 
 def write_markdown_table(details_list, output_file):
@@ -111,15 +115,15 @@ def write_markdown_table(details_list, output_file):
         f.write("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }\n")
         f.write("th:nth-child(1), td:nth-child(1) { width: 5%; white-space: nowrap; }\n")
         f.write("th:nth-child(2), td:nth-child(2) { width: 10%; white-space: nowrap;}\n")
-        f.write("th:nth-child(3), td:nth-child(3) { width: 5%; white-space: nowrap;}\n")
-        f.write("th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(2) { width: 20%; word-break: break-word; }\n")
+        f.write("th:nth-child(3), td:nth-child(3),th:nth-child(4), td:nth-child(4), { width: 5%; white-space: nowrap;}\n")
+		f.write("th:nth-child(5), td:nth-child(5), th:nth-child(6), td:nth-child(6) { width: 20%; word-break: break-word; }\n")
         f.write("</style>\n")
         f.write("<table>\n")
-        f.write("<tr><th>Jira ID</th><th>Title</th><th>Status</th><th>Pre-Change Note</th><th>Post-Change Note</th></tr>\n")
+        f.write("<tr><th>Jira ID</th><th>Title</th><th>Status</th><th>CustomerVisible</th><th>Pre-Change Note</th><th>Post-Change Note</th></tr>\n")
 
         for item in details_list:
             jira_link = f"<a href='{os.getenv('JIRA_URL')}/browse/{item['jira']}' target='_blank'>{item['jira']}</a>"
-            f.write(f"<tr><td>{jira_link}</td><td>{item['title']}</td><td>{item['status']}</td>"
+            f.write(f"<tr><td>{jira_link}</td><td>{item['title']}</td><td>{item['status']}</td><td>{item['include_in_release_notes']}</td>"
                     f"<td>{item['pre_change']}</td><td>{item['post_change']}</td></tr>\n")
 
         f.write("</table>\n")
