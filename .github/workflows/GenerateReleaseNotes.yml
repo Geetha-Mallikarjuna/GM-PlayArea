@@ -135,7 +135,6 @@ jobs:
           OUTPUT_FILE="ReleaseNotes/ReleaseNotes-Summary-${{ inputs.new_tag }}.html"
           pandoc ReleaseNotes/ReleaseNotes-Summary.md \
             --standalone \
-            --include-in-header=ReleaseNotes/header.html \
             -f markdown -t html \
             -o "$OUTPUT_FILE"
       # Upload the generated HTML file as a workflow artifact
