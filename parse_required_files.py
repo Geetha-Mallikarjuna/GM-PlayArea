@@ -36,7 +36,7 @@ def write_package_summary(require_files, output_path):
         # out.write('# 📦 Package Summary from required_files.yaml\n\n')
         # Begin HTML table
 	    out.write("<style>\n")
-        out.write("table { width: 100%; border-collapse: collapse; table-layout: fixed;}\n")
+	    out.write("table { width: 100%; border-collapse: collapse; table-layout: fixed;}\n")
         out.write("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }\n")
         out.write("th:nth-child(1), td:nth-child(1) { width: 5%; white-space: nowrap; }\n")
         out.write("th:nth-child(2), td:nth-child(2) { width: 15%; white-space: nowrap;}\n")
