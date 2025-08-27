@@ -34,16 +34,13 @@ def write_package_summary(require_files, output_path):
     with open(output_path, 'w') as out:
         # Write header
         # out.write('# 📦 Package Summary from required_files.yaml\n\n')
+
         # Begin HTML table
-        out.write("<style>\n")
-        out.write("table { width: 100%; border-collapse: collapse; table-layout: fixed;}\n")
-        out.write("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }\n")
-        out.write("th:nth-child(1), td:nth-child(1) { width: 5%; white-space: nowrap; }\n")
-        out.write("th:nth-child(2), td:nth-child(2) { width: 15%; white-space: nowrap;}\n")
-        out.write("th:nth-child(3), td:nth-child(3) { width: 70%; white-space: nowrap;}\n")
-        out.write("</style>\n")
-        out.write("<table>\n")
-        out.write("<tr><th>Package</th><th>Version</th><th>Name</th></tr>\n")
+        out.write('<table border="1" cellpadding="5" cellspacing="0">\n')
+        out.write('  <thead>\n')
+        out.write('    <tr><th>Package</th><th>Version</th><th>Name</th></tr>\n')
+        out.write('  </thead>\n')
+        out.write('  <tbody>\n')
 
         # Loop through each required package and write as HTML row
         for item in require_files:
@@ -53,6 +50,7 @@ def write_package_summary(require_files, output_path):
             out.write(f'    <tr><td>{package}</td><td>{version}</td><td>{name}</td></tr>\n')
 
         # Close table
+        out.write('  </tbody>\n')
         out.write('</table>\n')
 
 def main():
