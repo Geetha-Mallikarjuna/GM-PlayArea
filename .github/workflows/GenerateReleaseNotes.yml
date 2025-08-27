@@ -174,7 +174,8 @@ jobs:
               padding: 0.5em;
               text-align: left;
               vertical-align: top;
-              white-space: nowrap;
+              word-wrap: break-word;
+              word-break: break-word;
             }
             th:nth-child(1), td:nth-child(1),
             th:nth-child(2), td:nth-child(2) {
