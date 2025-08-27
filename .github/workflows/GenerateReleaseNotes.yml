@@ -184,9 +184,7 @@ jobs:
             }
             th:nth-child(3), td:nth-child(3) {
              width: 70%;
-             white-space: normal;
-             word-wrap: break-word;
-             word-break: break-word;
+             white-space: nowrap;
             }
           </style>
           EOF
