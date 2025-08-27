@@ -122,8 +122,6 @@ jobs:
             echo ""
             echo "## Change List"
             echo ""
-            echo "## Jira Titles"
-            echo ""
             cat ReleaseNotes/markdone.md
             echo ""
             echo "## Package Summary"
