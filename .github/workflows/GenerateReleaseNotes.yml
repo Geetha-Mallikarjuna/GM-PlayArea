@@ -222,4 +222,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ReleaseNotes
-          path: ReleaseNotes/*
+          path: |
+            ReleaseNotes/changelog*.txt
+            ReleaseNotes/ReleaseNotes-Summary-${{ inputs.new_tag }}.html
