@@ -47,12 +47,7 @@ def extract_jira_ids_from_file(file_path):
 def get_jira_details(jira_id):
     """
     Fetches summary, status, and custom release note fields from a Jira issue.
-
-    Args:
-        jira_id (str): The Jira issue key (e.g., DOPS-123).
-
-    Returns:
-        dict: Issue details (id, title, status, pre/post change notes).
+    Handles custom field types gracefully.
     """
     base_url = os.getenv("JIRA_URL")
     email = os.getenv("JIRA_EMAIL")
@@ -80,11 +75,21 @@ def get_jira_details(jira_id):
     data = response.json()
     fields = data.get("fields", {})
 
-    # Extract values with safe fallback
-    title = fields.get("summary", "No Title")
+    # Safe helpers to convert field values to string
+    def safe_str(field_value):
+        if isinstance(field_value, str):
+            return field_value.strip()
+        elif isinstance(field_value, dict) or isinstance(field_value, list):
+            return str(field_value)
+        elif field_value is None:
+            return "—"
+        else:
+            return str(field_value).strip()
+
+    title = safe_str(fields.get("summary"))
     status = fields.get("status", {}).get("name", "Unknown")
-    pre_change = fields.get(JIRA_FIELD_PRE_CHANGE, "").strip() or "—"
-    post_change = fields.get(JIRA_FIELD_POST_CHANGE, "").strip() or "—"
+    pre_change = safe_str(fields.get(JIRA_FIELD_PRE_CHANGE))
+    post_change = safe_str(fields.get(JIRA_FIELD_POST_CHANGE))
 
     return {
         "id": jira_id,
