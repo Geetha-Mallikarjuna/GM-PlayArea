@@ -122,7 +122,7 @@ def write_markdown_table(details_list, output_file):
             f.write(f"<tr><td>{jira_link}</td><td>{item['title']}</td><td>{item['status']}</td>"
                     f"<td>{item['pre_change']}</td><td>{item['post_change']}</td></tr>\n")
 
-        f.write("</table>\n"
+        f.write("</table>\n")
     print("✅ Done writing Jira titles.")
 
 
