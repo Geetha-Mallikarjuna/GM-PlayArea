@@ -130,7 +130,6 @@ jobs:
           } > ReleaseNotes/ReleaseNotes-Summary.md
 
       # Generate custom CSS header for HTML formatting (fixed indentation)
-      # Generate custom CSS header for HTML formatting
       - name: Generate custom CSS header
         run: |
           cat << 'EOF' > ReleaseNotes/header.html
