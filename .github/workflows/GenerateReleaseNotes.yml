@@ -190,9 +190,6 @@ jobs:
             }
           </style>
           EOF
-
-		 
-
       # Convert markdown summary to standalone HTML with custom CSS header
       - name: Convert markdown to HTML
         run: |
