@@ -72,8 +72,9 @@ jobs:
             echo "<h1>Release Notes</h1>"
             echo "<h2 style='margin-top:30px;'>Change List</h2>"
             # Extract body content from generated HTML file
-            sed -n '/<body>/,/<\/body>/p' release_notes_html/index.html | sed '1d;$d'
+            # sed -n '/<body>/,/<\/body>/p' release_notes_html/index.html | sed '1d;$d'
             # Append component table
+            cat release_notes.md
             cat component_table.html
             echo "</body></html>"
           } > formatted_release_notes.html
