@@ -52,7 +52,7 @@ jobs:
       # Step 6: Create Component Version HTML Table
       - name: 🧱 Generate Component Version Table
         run: |
-          python generate_component_table.py releases/NMS-1.6.0.yaml > component_table.html
+          python generate_component_table.py releases/NMS-v1.6.0.yaml > component_table.html
 
       # Step 7: Assemble final formatted HTML
       - name: 🧩 Combine Release Sections into Final HTML
