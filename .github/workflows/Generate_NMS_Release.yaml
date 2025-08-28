@@ -17,6 +17,10 @@ jobs:
       # Step 1: Checkout repository
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+      
+      # Step 1.5: Install Pandoc
+      - name: Install pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
 
       # Step 2: Set up Python
       - name: 🐍 Setup Python
