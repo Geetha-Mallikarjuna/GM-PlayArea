@@ -30,31 +30,31 @@ jobs:
           pip install --upgrade pip
           pip install requests pyyaml
 
-      # Step 4: Run Jira changelog parser
+      # Step 4: Run Jira changelog processor (generates markdown)
       - name: 🧾 Generate Markdown from Jira Changelog
         run: |
           python jira_changelog_processor.py \
             --changelogs releases/NMS-v1.6.0.json \
             --output release_notes.md
 
-      # Step 4.5: Ensure the markdown has a title (required by the converter)
-      - name: 🛠️ Prepend H1 Title to Markdown (Required for Converter)
+      # Step 4.5: Prepend Title and Change List heading to markdown (needed by converter)
+      - name: 🛠️ Prepend Title and Change List Heading to Markdown
         run: |
-          echo "# Release Notes" | cat - release_notes.md > temp.md && mv temp.md release_notes.md		
+          echo "# Release Notes\n\n## Change List" | cat - release_notes.md > temp.md && mv temp.md release_notes.md
 
-      # Step 5: Convert Markdown to HTML
+      # Step 5: Convert Markdown to GitHub-Styled HTML
       - name: 🖋️ Convert Markdown to GitHub-Styled HTML
         uses: natescherer/markdown-to-html-with-github-style-action@v1.1.0
         with:
           path: release_notes.md
           outputpath: release_notes.html
 
-      # Step 6: Create Component Version HTML Table
+      # Step 6: Generate Component Version table from YAML
       - name: 🧱 Generate Component Version Table
         run: |
           python generate_component_table.py releases/NMS-v1.6.0.yaml > component_table.html
 
-      # Step 7: Assemble final formatted HTML
+      # Step 7: Combine Jira HTML and Component Version table into final HTML
       - name: 🧩 Combine Release Sections into Final HTML
         run: |
           {
@@ -62,14 +62,16 @@ jobs:
             echo "<html>"
             echo "<head><meta charset='utf-8'><title>Release Notes</title></head>"
             echo "<body style='font-family:Arial,sans-serif;'>"
-            echo "<h1>Release Notes</h1>"
-            echo "<h2 style='margin-top:30px;'>Change List</h2>"
+            # Insert Jira release notes content (strip <body> tags)
             sed -n '/<body>/,/<\/body>/p' release_notes.html | sed '1d;$d'
+            # Add heading for component versions
+            echo "<h2 style='margin-top:30px;'>Component Versions</h2>"
+            # Insert Component Version Table HTML
             cat component_table.html
             echo "</body></html>"
           } > formatted_release_notes.html
 
-      # Step 8: Upload final artifact
+      # Step 8: Upload final formatted HTML as artifact
       - name: 🚀 Upload Formatted HTML as Artifact
         uses: actions/upload-artifact@v4
         with:
