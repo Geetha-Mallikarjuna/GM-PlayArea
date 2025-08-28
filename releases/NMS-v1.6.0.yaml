@@ -1,0 +1,14 @@
+# CBNG components
+nms_dbmigration_version: 1.8.528
+nms_filesapi_version: 1.10.205
+nms_frontend_version: 1.10.1278
+nms_grpcserver_version: latest  # Not deployed
+nms_jobsapi_version: 1.10.152
+nms_jobdispatchers_version: 1.9.199
+nms_jobschedulersapi_version: 1.9.116
+nms_nbapi_version: 1.10.594
+nms_sbapi_version: 1.11.825
+nms_scheduler_version: 1.10.186
+nms_simulator_version: latest  # Not deployed
+nms_storage_version: 1.11.144
+nms_subscribers_version: 1.8.149
