@@ -74,7 +74,9 @@ jobs:
             # Extract body content from generated HTML file
             # sed -n '/<body>/,/<\/body>/p' release_notes_html/index.html | sed '1d;$d'
             # Append component table
-            cat release_notes.md
+            # Convert markdown changelist to HTML and output here
+            pandoc release_notes.md --to html
+            #cat release_notes.md
             cat component_table.html
             echo "</body></html>"
           } > formatted_release_notes.html
