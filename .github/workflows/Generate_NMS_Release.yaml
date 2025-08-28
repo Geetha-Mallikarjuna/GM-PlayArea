@@ -46,6 +46,9 @@ jobs:
       - name: 🧹 Cleanup potential folder conflict
         run: rm -rf release_notes.html
 
+      - name: 🐞 Debug:Show release_notes.md content
+        run: head -40 release_notes.md
+
       # Step 6: Convert Markdown to GitHub-Styled HTML (output to directory)
       - name: 🖋️ Convert Markdown to GitHub-Styled HTML
         uses: natescherer/markdown-to-html-with-github-style-action@v1.1.0
