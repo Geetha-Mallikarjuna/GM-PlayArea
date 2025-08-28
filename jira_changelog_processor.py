@@ -167,9 +167,9 @@ def write_markdown_table(details_list, output_file):
         f.write("table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n")
         f.write("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }\n")
         f.write("th:nth-child(1), td:nth-child(1) { width: 5%; white-space: nowrap; }\n")
-        f.write("th:nth-child(2), td:nth-child(2) { width: 10%; white-space: nowrap; }\n")
+        f.write("th:nth-child(2), td:nth-child(2) { width: 20%; white-space: wrap; }\n")
         f.write("th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4) { width: 5%; white-space: nowrap; }\n")
-        f.write("th:nth-child(5), td:nth-child(5), th:nth-child(6), td:nth-child(6) { width: 20%; word-break: break-word; }\n")
+        f.write("th:nth-child(5), td:nth-child(5), th:nth-child(6), td:nth-child(6) { width: 10%; word-break: break-word; }\n")
         f.write("</style>\n")
 
         f.write("<table>\n")
