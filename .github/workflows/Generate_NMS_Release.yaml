@@ -1,0 +1,73 @@
+name: 📦 Generate HTML Release Notes from Jira JSON
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  generate-release-notes:
+    name: 🛠️ Build and Upload Release Notes
+    runs-on: ubuntu-latest
+
+    env:
+      JIRA_URL: ${{ secrets.JIRA_URL }}
+      JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+    steps:
+      # Step 1: Checkout repository
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Step 3: Install dependencies
+      - name: 📦 Install Python Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install requests pyyaml
+
+      # Step 4: Run Jira changelog parser
+      - name: 🧾 Generate Markdown from Jira Changelog
+        run: |
+          python jira_changelog_processor.py \
+            --changelogs releases/NMS-v1.6.0.json \
+            --output release_notes.md
+
+      # Step 5: Convert Markdown to HTML
+      - name: 🖋️ Convert Markdown to GitHub-Styled HTML
+        uses: natescherer/markdown-to-html-with-github-style-action@v1.1.0
+        with:
+          path: release_notes.md
+          outputpath: release_notes.html
+
+      # Step 6: Create Component Version HTML Table
+      - name: 🧱 Generate Component Version Table
+        run: |
+          python generate_component_table.py releases/NMS-1.6.0.yaml > component_table.html
+
+      # Step 7: Assemble final formatted HTML
+      - name: 🧩 Combine Release Sections into Final HTML
+        run: |
+          {
+            echo "<!DOCTYPE html>"
+            echo "<html>"
+            echo "<head><meta charset='utf-8'><title>Release Notes</title></head>"
+            echo "<body style='font-family:Arial,sans-serif;'>"
+            echo "<h1>Release Notes</h1>"
+            echo "<h2 style='margin-top:30px;'>Change List</h2>"
+            sed -n '/<body>/,/<\/body>/p' release_notes.html | sed '1d;$d'
+            cat component_table.html
+            echo "</body></html>"
+          } > formatted_release_notes.html
+
+      # Step 8: Upload final artifact
+      - name: 🚀 Upload Formatted HTML as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-release-notes-html
+          path: formatted_release_notes.html
+          if-no-files-found: error
