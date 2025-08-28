@@ -63,7 +63,9 @@ jobs:
             echo "<head><meta charset='utf-8'><title>Release Notes</title></head>"
             echo "<body style='font-family:Arial,sans-serif;'>"
             # Insert Jira release notes content (strip <body> tags)
-            sed -n '/<body>/,/<\/body>/p' release_notes.html | sed '1d;$d'
+            #sed -n '/<body>/,/<\/body>/p' release_notes.html | sed '1d;$d'
+            #sed '/<html>/d; /<\/html>/d; /<head>/,/<\/head>/d'
+            cat release_notes.html
             # Add heading for component versions
             echo "<h2 style='margin-top:30px;'>Component Versions</h2>"
             # Insert Component Version Table HTML
