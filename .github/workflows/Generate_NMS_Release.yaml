@@ -40,20 +40,7 @@ jobs:
           python jira_changelog_processor.py \
             --changelogs releases/NMS-v1.6.0.json \
             --output release_notes.md
-            
-      # Step 4.5: Ensure the markdown has a title (required by the converter)
-      - name: 🛠️ Prepend H1 Title to Markdown (Required for Converter)
-        run: echo "No header prepended – will be handled in final HTML"
-        #run: |
-          #echo "# Change List" | cat - release_notes.md > temp.md && mv temp.md release_notes.md
-          #echo "<h2 style='margin-top:30px;'>Change List</h2>" | cat - release_notes.md > temp.md && mv temp.md release_notes.md
 
-      # Step 6: Convert Markdown to GitHub-Styled HTML (output to directory)
-      - name: 🖋️ Convert Markdown to GitHub-Styled HTML
-        uses: natescherer/markdown-to-html-with-github-style-action@v1.1.0
-        with:
-          path: release_notes.md
-          outputpath: release_notes_html
 
       # Step 7: Generate Component Version HTML Table
       - name: 🧱 Generate Component Version Table
