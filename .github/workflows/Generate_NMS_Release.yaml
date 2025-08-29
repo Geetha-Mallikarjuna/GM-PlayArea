@@ -63,10 +63,11 @@ jobs:
             echo "<body>"
             echo "<div class='centered'>"
             echo "<h1>Release Notes</h1>"
+            echo "</div>"
             echo "<h2 style='margin-top:30px;'>Change List</h2>"
             pandoc release_notes.md --to html 
             cat component_table.html
-            echo "</div>"
+            
             echo "</body></html>"
           } > formatted_release_notes.html
 
