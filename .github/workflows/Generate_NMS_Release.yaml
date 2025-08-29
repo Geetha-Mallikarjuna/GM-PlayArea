@@ -64,7 +64,7 @@ jobs:
             echo "<div class='centered'>"
             echo "<h1>Release Notes</h1>"
             echo "<h2 style='margin-top:30px;'>Change List</h2>"
-            pandoc release_notes.md --to html | sed '0,/<h1>.*<\/h1>/d'
+            pandoc release_notes.md --to html 
             cat component_table.html
             echo "</div>"
             echo "</body></html>"
