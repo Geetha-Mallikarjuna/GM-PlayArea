@@ -18,55 +18,59 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
       
-      # Step 1.5: Install Pandoc
+      # Step 2: Install Pandoc
       - name: Install pandoc
         run: sudo apt-get update && sudo apt-get install -y pandoc
 
-      # Step 2: Set up Python
+      # Step 3: Set up Python
       - name: 🐍 Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # Step 3: Install dependencies
+      # Step 4: Install dependencies
       - name: 📦 Install Python Dependencies
         run: |
           pip install --upgrade pip
           pip install requests pyyaml
 
-      # Step 4: Run Jira changelog parser
+      # Step 5: Run Jira changelog parser
       - name: 🧾 Generate Markdown from Jira Changelog
         run: |
           python jira_changelog_processor.py \
             --changelogs releases/NMS-v1.6.0.json \
             --output release_notes.md
 
-
-      # Step 7: Generate Component Version HTML Table
+      # Step 6: Generate Component Version HTML Table
       - name: 🧱 Generate Component Version Table
         run: |
           python generate_component_table.py releases/NMS-v1.6.0.yaml > component_table.html
 
-      # Step 8: Assemble final formatted HTML (using file inside output directory)
-      - name: 🧩 Combine Release Sections into Final HTML
+      # Step 7: Assemble final formatted HTML (using file inside output directory)
+      - name: 🧩 Combine Release Sections into Final HTML (Center Aligned)
         run: |
           {
             echo "<!DOCTYPE html>"
             echo "<html>"
-            echo "<head><meta charset='utf-8'><title>Release Notes</title></head>"
-            echo "<body style='font-family:Arial,sans-serif;'>"
-            #echo "<h3 style='margin-top:30px;'>Change List</h2>"
-            #echo "# Release Notes"
-            # Convert markdown changelist to HTML and output here
-            echo "<h1>Release Notes</h1>"  # ✅ Main title
-            echo "<h2 style='margin-top:30px;'>Change List</h2>"  # ✅ Section heading
-            pandoc release_notes.md --to html
-            #cat release_notes.md
+            echo "<head><meta charset='utf-8'><title>Release Notes</title>"
+            echo "<style>"
+            echo "  body { font-family: Arial, sans-serif; }"
+            echo "  .centered { text-align: center; max-width: 800px; margin: 0 auto; }"
+            echo "  table { margin: 20px auto; border-collapse: collapse; }"
+            echo "  table, th, td { border: 1px solid #ccc; padding: 8px; }"
+            echo "</style>"
+            echo "</head>"
+            echo "<body>"
+            echo "<div class='centered'>"
+            echo "<h1>Release Notes</h1>"
+            echo "<h2 style='margin-top:30px;'>Change List</h2>"
+            pandoc release_notes.md --to html | sed '0,/<h1>.*<\/h1>/d'
             cat component_table.html
+            echo "</div>"
             echo "</body></html>"
           } > formatted_release_notes.html
 
-      # Step 9: Upload final artifact
+      # Step 8: Upload final artifact
       - name: 🚀 Upload Formatted HTML as Artifact
         uses: actions/upload-artifact@v4
         with:
