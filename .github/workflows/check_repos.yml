@@ -24,8 +24,8 @@ jobs:
       - name: 🔍 Run repository status check and capture output
         id: run_script
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ORG: your-org-or-username  # <-- Replace this
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+          GITHUB_ORG: CBNL  # <-- Replace this
         run: |
           echo "::group::Running Python script"
           python check_repos.py | tee output.log
