@@ -32,7 +32,7 @@ jobs:
       # Step 4: Run the repo checking Python script
       - name: Run repository status check
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
           GITHUB_ORG: your-org-or-username  # <-- Replace with your org or username
         run: |
           python check_repos.py
