@@ -44,7 +44,8 @@ jobs:
       # Step 4.5: Ensure the markdown has a title (required by the converter)
       - name: 🛠️ Prepend H1 Title to Markdown (Required for Converter)
         run: |
-          echo "# Release Notes" | cat - release_notes.md > temp.md && mv temp.md release_notes.md
+          #echo "# Release Notes" | cat - release_notes.md > temp.md && mv temp.md release_notes.md
+          echo "<h2 style='margin-top:30px;'>Change List</h2>" | cat - release_notes.md > temp.md && mv temp.md release_notes.md
 
       # Step 6: Convert Markdown to GitHub-Styled HTML (output to directory)
       - name: 🖋️ Convert Markdown to GitHub-Styled HTML
@@ -66,7 +67,8 @@ jobs:
             echo "<html>"
             echo "<head><meta charset='utf-8'><title>Release Notes</title></head>"
             echo "<body style='font-family:Arial,sans-serif;'>"
-            echo "<h3 style='margin-top:30px;'>Change List</h2>"
+            #echo "<h3 style='margin-top:30px;'>Change List</h2>"
+            echo "# Release Notes"
             # Convert markdown changelist to HTML and output here
             pandoc release_notes.md --to html
             #cat release_notes.md
