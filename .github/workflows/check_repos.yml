@@ -1,53 +1,57 @@
 name: Check New or Archived Repos
 
-# Triggers:
-# - Scheduled daily at midnight UTC
-# - Manual trigger from GitHub UI
 on:
-  schedule:
-    - cron: '0 0 * * *'  # every day at 00:00 UTC
-  workflow_dispatch:     # manual trigger
+  workflow_dispatch:
 
 jobs:
   check_repos:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repo to access code and state file
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Set up Python environment
-      - name: Set up Python 3.x
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      # Step 3: Install required Python packages
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      # Step 4: Run the repo checking Python script
-      - name: Run repository status check
+      - name: 🔍 Run repository status check and capture output
+        id: run_script
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
-          GITHUB_ORG: CBNL  # <-- Replace with your org or username
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ORG: your-org-or-username  # <-- Replace this
         run: |
-          python check_repos.py
+          echo "::group::Running Python script"
+          python check_repos.py | tee output.log
+          echo "::endgroup::"
 
-      # Step 5: Commit and push updated state file if there are changes
-      - name: Commit updated repos_state.json if changed
+          # Format and append output to GitHub summary tab
+          {
+            echo "## 🔍 GitHub Repo Monitor Summary"
+            echo ""
+            echo "#### 🕒 Run Time: $(date -u)"
+            echo ""
+            echo '````'
+            cat output.log
+            echo '````'
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: 💾 Commit updated state file (if changed)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add repos_state.json
 
-          # Check if there are changes to commit
           if ! git diff --cached --quiet; then
             git commit -m "Update repos_state.json with latest repo info"
             git push
+            echo "✅ State file updated and committed."
           else
-            echo "No changes to repos_state.json; skipping commit."
-          fi
+            echo "✅ No changes to state file. Nothing to commit."
+           fi 
