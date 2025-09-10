@@ -1,5 +1,4 @@
-name: 📦 Generate HTML Release Notes from Jira JSON
-
+name: 📦 Generate NMS Point Release Notes
 on:
   workflow_dispatch:  # Manual trigger only
 
