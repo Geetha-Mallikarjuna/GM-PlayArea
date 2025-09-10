@@ -1,0 +1,74 @@
+name: 📦 Generate HTML Release Notes from Jira JSON
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  generate-release-notes:
+    name: 🛠️ Build and Upload Release Notes
+    runs-on: ubuntu-latest
+
+    env:
+      JIRA_URL: ${{ secrets.JIRA_URL }}
+      JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+      JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+    steps:
+      # Step 1: Checkout repository
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      # Step 2: Install Pandoc
+      - name: Install pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
+
+      # Step 3: Set up Python
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Step 4: Install dependencies
+      - name: 📦 Install Python Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install requests pyyaml
+
+      # Step 5: Run Jira changelog parser
+      - name: 🧾 Generate Markdown from Jira Changelog
+        run: |
+          python jira_changelog_processor.py \
+            --changelogs releases/NMS-v1.6.0.txt \
+            --output release_notes.md
+
+      # Step 7: Assemble final formatted HTML (using file inside output directory)
+      - name: 🧩 Combine Release Sections into Final HTML (Center Aligned)
+        run: |
+          {
+            echo "<!DOCTYPE html>"
+            echo "<html>"
+            echo "<head><meta charset='utf-8'><title>Release Notes</title>"
+            echo "<style>"
+            echo "  body { font-family: Arial, sans-serif; }"
+            echo "  .centered { text-align: center; max-width: 800px; margin: 0 auto; }"
+            echo "  table { margin: 20px auto; border-collapse: collapse; }"
+            echo "  table, th, td { border: 1px solid #ccc; padding: 8px; }"
+            echo "</style>"
+            echo "</head>"
+            echo "<body>"
+            echo "<div class='centered'>"
+            echo "<h1>Release Notes</h1>"
+            echo "</div>"
+            echo "<h2 style='margin-top:30px;'>Change List</h2>"
+            pandoc release_notes.md --to html 
+                     
+            echo "</body></html>"
+          } > formatted_release_notes.html
+
+      # Step 8: Upload final artifact
+      - name: 🚀 Upload Formatted HTML as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-release-notes-html
+          path: formatted_release_notes.html
+          if-no-files-found: error
