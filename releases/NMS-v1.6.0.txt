@@ -1,11 +1,6 @@
-NMS-2022  AP details (Read only user) (#428) (#447)  [cloud-nms-frontend]
-NMS-2044  Include error log download in RT log download cron job (#96)  [cloud-nms-scheduler]
-NMS-2062  When NB JWTs expire, the front end does not redirect to the openAM login page. (#450)  [cloud-nms-frontend]
-NMS-2065  1.6 branch version of Scheduler Blocking Fix (#94)  [cloud-nms-scheduler]
-NMS-2077  Fix central auth env var read (#453) (#455)  [cloud-nms-frontend]
-NMS-2083  Generate AP node IP pool on node creation (#240)  [cloud-northbound-api]
-NMS-2083  Remove allocation of IP pool from AP registration (#336)  [cloud-southbound-api]
-NMS-2088  Stop overwriting IP pool params (#243) (#244)  [cloud-northbound-api]
-NMS-2102  Firmware upgrade dispatcher timeout isn't based on file size (#129)  [cloud-nms-job-dispatchers]
-Re-create 105->106 script but targeting every AP (#358)  [cloud-nms-database]
+NMS-2020  SSO  Network page for a Read only User (#457) (#459)  [cloud-nms-frontend]
+NMS-2023  SSO  Hub Details (Read only) (#458) (#460)  [cloud-nms-frontend]
+NMS-2116  NMS rsyslog forwarder needs to support UDP as well as TCP (#99)  [cloud-nms-scheduler]
+NMS-2131  SB  Heartbeat endpoint getting all jobs and processing (#343)  [cloud-southbound-api]
+
 
