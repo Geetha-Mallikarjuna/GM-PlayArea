@@ -1,6 +1,4 @@
-NMS-2020  SSO  Network page for a Read only User (#457) (#459)  [cloud-nms-frontend]
-NMS-2023  SSO  Hub Details (Read only) (#458) (#460)  [cloud-nms-frontend]
-NMS-2116  NMS rsyslog forwarder needs to support UDP as well as TCP (#99)  [cloud-nms-scheduler]
-NMS-2131  SB  Heartbeat endpoint getting all jobs and processing (#343)  [cloud-southbound-api]
+DOPS-518 Test
+
 
 
