@@ -38,7 +38,7 @@ jobs:
         run: |
           python parse2.py \
             --changelogs releases/NMS-v1.6.0.txt \
-            --output release_notes.md
+            --output release_notes.md \
             --version 1.6.98
 
       # Step 7: Assemble final formatted HTML (using file inside output directory)
