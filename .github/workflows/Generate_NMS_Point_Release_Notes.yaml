@@ -36,9 +36,10 @@ jobs:
       # Step 5: Run Jira changelog parser
       - name: 🧾 Generate Markdown from Jira Changelog
         run: |
-          python jira_changelog_processor.py \
+          python parse2.py \
             --changelogs releases/NMS-v1.6.0.txt \
             --output release_notes.md
+            --version 1.6.98
 
       # Step 7: Assemble final formatted HTML (using file inside output directory)
       - name: 🧩 Combine Release Sections into Final HTML (Center Aligned)
