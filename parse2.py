@@ -180,9 +180,9 @@ def update_jira_delivery_and_status(jira_id, version, issue_type):
     # 1️⃣ Always update delivery details (fixVersions field)
     update_url = f"{base_url}/rest/api/3/issue/{jira_id}"
     payload = {
-        "update": {
-            "fixVersions": [{"set": [{"name": version}]}]
-        }
+    "fields": {
+        "customfield_10097": version
+     }
     }
     print(f"🚚 Updating delivery details for {jira_id} → version {version}")
     response = requests.put(update_url, auth=(email, token), headers=headers, json=payload)
