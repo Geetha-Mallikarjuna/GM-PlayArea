@@ -1,4 +1,4 @@
-DOPS-518 Test
+NMS-2168  Fix byte limit for UDP (#102)  [cloud-nms-scheduler]
 
 
 
